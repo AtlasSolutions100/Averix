@@ -28,6 +28,9 @@ export function LoginPage({ onLogin, onSwitchToSignup }: LoginPageProps) {
       // Sign in with Supabase
       await authAPI.signIn(email, password);
       
+      // Small delay to ensure session is persisted
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
       // Get user profile
       const userData = await authAPI.getMe();
       
@@ -37,16 +40,20 @@ export function LoginPage({ onLogin, onSwitchToSignup }: LoginPageProps) {
       console.error('Login error:', err);
       
       // Check if it's a server connectivity issue
-      if (err.message?.includes('Load failed') || err.message?.includes('fetch')) {
-        setError("⚠️ Cannot connect to server. Make sure the Supabase Edge Function is deployed. See SERVER_DEPLOYMENT_GUIDE.md for instructions.");
-        toast.error("Server not available", {
-          description: "The backend server needs to be deployed. Check the console for details.",
-          duration: 7000,
+      if (err.message?.includes('Failed to fetch') || err.message?.includes('NetworkError')) {
+        setError("⚠️ Cannot connect to server. Please check if the backend is deployed.");
+        toast.error("Server Connection Error", {
+          description: "Make sure your Supabase Edge Function is deployed",
+        });
+      } else if (err.message?.includes('Invalid login credentials')) {
+        setError("Incorrect email or password");
+        toast.error("Login Failed", {
+          description: "Please check your credentials",
         });
       } else {
-        setError(err.message || "Invalid email or password");
-        toast.error("Login failed", {
-          description: err.message || "Please check your credentials"
+        setError(err.message || "Login failed. Please try again.");
+        toast.error("Login Error", {
+          description: err.message || "An unexpected error occurred",
         });
       }
     } finally {
@@ -62,6 +69,10 @@ export function LoginPage({ onLogin, onSwitchToSignup }: LoginPageProps) {
 
     try {
       await authAPI.signIn(userEmail, "demo");
+      
+      // Small delay to ensure session is persisted
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
       const userData = await authAPI.getMe();
       onLogin(userData);
       toast.success("Demo login successful!");

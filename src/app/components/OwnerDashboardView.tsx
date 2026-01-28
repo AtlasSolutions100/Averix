@@ -53,8 +53,12 @@ export function OwnerDashboardView({ user }: OwnerDashboardViewProps) {
 
         setMetrics(analyticsData.metrics);
         setLeaderboard(leaderboardData.leaderboard || []);
-      } catch (error) {
+      } catch (error: any) {
         console.error('Failed to load dashboard data:', error);
+        // If it's an auth error, the user will be logged out automatically
+        if (error.message?.includes('No active session')) {
+          console.error('Session expired, user needs to log in again');
+        }
       } finally {
         setLoading(false);
       }

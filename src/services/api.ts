@@ -67,11 +67,28 @@ export const supabase = {
 // Helper function to get auth headers
 const getAuthHeaders = async () => {
   loadConfig();
-  const { data: { session } } = await getSupabaseClient().auth.getSession();
+  
+  console.log('🔐 Getting auth headers...');
+  const { data: { session }, error } = await getSupabaseClient().auth.getSession();
+  
+  if (error) {
+    console.error('❌ Error getting session for auth headers:', error);
+    throw new Error('Failed to get authentication session');
+  }
+  
+  if (!session || !session.access_token) {
+    console.error('❌ No session or access token available');
+    console.error('   Session:', session);
+    throw new Error('No active session. Please log in again.');
+  }
+  
+  console.log('✅ Session found, access token length:', session.access_token.length);
+  console.log('   Token preview:', session.access_token.substring(0, 30) + '...');
+  
   return {
     'Content-Type': 'application/json',
     'Authorization': `Bearer ${publicAnonKey}`, // Use anon key for Supabase gateway
-    'X-User-Token': session?.access_token || '', // Send actual user token in custom header
+    'X-User-Token': session.access_token, // Send actual user token in custom header
   };
 };
 

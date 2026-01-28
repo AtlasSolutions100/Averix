@@ -1,5 +1,5 @@
 import { ReactNode, useState } from "react";
-import { LogOut, LayoutDashboard, Users, Store, Target, TrendingUp, Settings, Grid, Bell, UsersRound, Building2, ClipboardList } from "lucide-react";
+import { LogOut, LayoutDashboard, Users, Store, Target, TrendingUp, Settings, Grid, Bell, UsersRound, Building2, ClipboardList, PieChart } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
 import { VeridexLogo } from "@/app/components/VeridexLogo";
 import { User } from "@/app/App";
@@ -12,13 +12,14 @@ import { TeamManagement } from "@/app/components/TeamManagement";
 import { StoreManagementView } from "@/app/components/StoreManagementView";
 import { OfficeSettingsView } from "@/app/components/OfficeSettingsView";
 import { EntriesView } from "@/app/components/EntriesView";
+import { StorePerformanceView } from "@/app/components/StorePerformanceView";
 
 interface OwnerLayoutProps {
   user: User;
   onLogout: () => void;
 }
 
-type ViewType = "dashboard" | "reps" | "stores" | "loa" | "goals" | "team" | "storeManagement" | "officeSettings" | "entries";
+type ViewType = "dashboard" | "reps" | "stores" | "loa" | "goals" | "team" | "storeManagement" | "officeSettings" | "entries" | "storePerformance";
 
 export function OwnerLayout({ user, onLogout }: OwnerLayoutProps) {
   const [currentView, setCurrentView] = useState<ViewType>("dashboard");
@@ -32,6 +33,7 @@ export function OwnerLayout({ user, onLogout }: OwnerLayoutProps) {
     { id: "team" as ViewType, label: "Team", icon: UsersRound },
     { id: "officeSettings" as ViewType, label: "Settings", icon: Settings },
     { id: "entries" as ViewType, label: "Entries", icon: ClipboardList },
+    { id: "storePerformance" as ViewType, label: "Store Performance", icon: PieChart },
   ];
 
   return (
@@ -110,6 +112,7 @@ export function OwnerLayout({ user, onLogout }: OwnerLayoutProps) {
               {currentView === "team" && "Create and manage team member accounts"}
               {currentView === "officeSettings" && "Configure your office and preferences"}
               {currentView === "entries" && "Review all daily performance submissions"}
+              {currentView === "storePerformance" && "Analyze store performance metrics"}
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -132,6 +135,7 @@ export function OwnerLayout({ user, onLogout }: OwnerLayoutProps) {
           {currentView === "team" && <TeamManagement user={user} />}
           {currentView === "officeSettings" && <OfficeSettingsView user={user} />}
           {currentView === "entries" && <EntriesView user={user} />}
+          {currentView === "storePerformance" && <StorePerformanceView user={user} />}
         </div>
       </div>
     </div>
