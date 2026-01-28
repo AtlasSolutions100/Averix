@@ -150,11 +150,11 @@ function AppContent() {
     return (
       <div className="flex items-center justify-center h-screen bg-background">
         <div className="text-center">
-          <div className="relative w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <div className="absolute inset-0 bg-gradient-to-br from-primary to-purple-600 rounded-2xl blur-lg opacity-50 animate-pulse"></div>
-            <div className="relative w-16 h-16 bg-gradient-to-br from-primary to-purple-600 rounded-2xl flex items-center justify-center">
-              <span className="text-2xl font-bold text-white">A</span>
-            </div>
+          <div className="relative w-16 h-16 mx-auto mb-4">
+            {/* RGB animated spinner */}
+            <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-red-500 animate-spin"></div>
+            <div className="absolute inset-0 rounded-full border-4 border-transparent border-r-green-500 animate-spin" style={{ animationDelay: '0.15s', animationDuration: '1.5s' }}></div>
+            <div className="absolute inset-0 rounded-full border-4 border-transparent border-b-blue-500 animate-spin" style={{ animationDelay: '0.3s', animationDuration: '2s' }}></div>
           </div>
           <p className="text-muted-foreground">Loading...</p>
         </div>
