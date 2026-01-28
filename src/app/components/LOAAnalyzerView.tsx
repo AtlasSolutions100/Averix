@@ -1,157 +1,397 @@
+import { useState, useEffect } from "react";
 import { Card } from "@/app/components/ui/card";
-import { Progress } from "@/app/components/ui/progress";
-import { Slider } from "@/app/components/ui/slider";
+import { Button } from "@/app/components/ui/button";
+import { Input } from "@/app/components/ui/input";
+import { Label } from "@/app/components/ui/label";
+import { Badge } from "@/app/components/ui/badge";
+import { Loader2, Target, TrendingUp, Save, CheckCircle2 } from "lucide-react";
+import { analyticsAPI, goalsAPI } from "@/services/api";
+import type { User } from "@/app/App";
 
-export function LOAAnalyzerView() {
+interface LOAAnalyzerViewProps {
+  user: User;
+}
+
+export function LOAAnalyzerView({ user }: LOAAnalyzerViewProps) {
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [metrics, setMetrics] = useState<any>(null);
+  const [goals, setGoals] = useState<any>({
+    dailyContacts: 50,
+    dailySales: 3,
+    dailyRevenue: 360,
+    weeklyContacts: 250,
+    weeklySales: 15,
+    weeklyRevenue: 1800,
+    monthlyContacts: 1000,
+    monthlySales: 60,
+    monthlyRevenue: 7200,
+    contactsPerSale: 7,
+    presentationsPerSale: 3,
+    stopsPerContact: 2,
+  });
+
+  useEffect(() => {
+    const loadData = async () => {
+      if (!user?.officeId) return;
+      
+      try {
+        // Load last 30 days analytics
+        const endDate = new Date();
+        const startDate = new Date();
+        startDate.setMonth(startDate.getMonth() - 1);
+
+        const [analyticsRes, goalsRes] = await Promise.all([
+          analyticsAPI.getOfficeAnalytics(user.officeId, {
+            startDate: startDate.toISOString().split('T')[0],
+            endDate: endDate.toISOString().split('T')[0],
+          }),
+          goalsAPI.getGoals(user.officeId),
+        ]);
+
+        if (analyticsRes?.metrics) {
+          setMetrics(analyticsRes.metrics);
+        }
+        if (goalsRes?.goals) {
+          setGoals(goalsRes.goals);
+        }
+      } catch (error) {
+        console.error('Failed to load LOA data:', error);
+        // Set default goals on error
+        setGoals({
+          dailyContacts: 50,
+          dailySales: 3,
+          dailyRevenue: 360,
+          weeklyContacts: 250,
+          weeklySales: 15,
+          weeklyRevenue: 1800,
+          monthlyContacts: 1000,
+          monthlySales: 60,
+          monthlyRevenue: 7200,
+          contactsPerSale: 7,
+          presentationsPerSale: 3,
+          stopsPerContact: 2,
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, [user?.officeId]);
+
+  const handleSaveGoals = async () => {
+    if (!user?.officeId) return;
+    
+    setSaving(true);
+    try {
+      await goalsAPI.updateGoals(user.officeId, goals);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } catch (error) {
+      console.error('Failed to save goals:', error);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleGoalChange = (field: string, value: string) => {
+    setGoals((prev: any) => ({
+      ...prev,
+      [field]: parseFloat(value) || 0,
+    }));
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <Loader2 className="size-8 animate-spin text-blue-600" />
+      </div>
+    );
+  }
+
+  // Calculate actual LOA metrics
+  const actualContactsPerSale = metrics?.sales > 0 ? (metrics.contacts / metrics.sales).toFixed(1) : '0';
+  const actualPresPerSale = metrics?.sales > 0 ? (metrics.presentations / metrics.sales).toFixed(1) : '0';
+  const actualStopsPerContact = metrics?.contacts > 0 ? (metrics.stops / metrics.contacts).toFixed(1) : '0';
+
+  // Calculate gaps
+  const contactsGap = parseFloat(actualContactsPerSale) - goals.contactsPerSale;
+  const presGap = parseFloat(actualPresPerSale) - goals.presentationsPerSale;
+  const stopsGap = parseFloat(actualStopsPerContact) - goals.stopsPerContact;
+
   return (
     <div className="h-full flex flex-col bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b px-6 py-4">
-        <h1 className="text-2xl font-semibold text-gray-900">LOA Analyzer</h1>
-      </div>
+      <div className="flex-1 overflow-auto p-6 space-y-6">
+        <div>
+          <h2 className="text-2xl font-semibold text-gray-900">LOA Analyzer</h2>
+          <p className="text-gray-600">Set goals and analyze Law of Averages metrics</p>
+        </div>
 
-      {/* Content */}
-      <div className="flex-1 overflow-auto p-6">
-        <div className="grid grid-cols-2 gap-6">
-          {/* LOA Metrics */}
+        {/* Current Performance vs Goals */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* LOA Metrics Card */}
           <Card className="p-6">
-            <h3 className="text-lg font-semibold mb-6">LOA Metrics</h3>
+            <div className="flex items-center gap-2 mb-6">
+              <Target className="size-5 text-blue-600" />
+              <h3 className="text-lg font-semibold">LOA Performance (Last 30 Days)</h3>
+            </div>
             
             <div className="space-y-6">
+              {/* Contacts per Sale */}
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm font-medium">Contacts / Sale</span>
                   <div className="flex items-center gap-3">
-                    <span className="text-xs text-gray-500">Avg Needed: 7.0</span>
-                    <span className="text-xs text-gray-500">Jake's Actual: 6.2</span>
-                    <span className="text-sm font-semibold text-red-600">Gap: -0.6</span>
+                    <span className="text-xs text-gray-600">Goal: {goals.contactsPerSale}</span>
+                    <span className="text-xs text-gray-600">Actual: {actualContactsPerSale}</span>
+                    <Badge variant={contactsGap <= 0 ? "default" : "destructive"}>
+                      {contactsGap > 0 ? '+' : ''}{contactsGap.toFixed(1)}
+                    </Badge>
                   </div>
                 </div>
-                <Progress value={88} className="h-2" />
+                <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                  <div 
+                    className={`h-full ${contactsGap <= 0 ? 'bg-green-500' : 'bg-red-500'}`}
+                    style={{ width: `${Math.min(100, (goals.contactsPerSale / parseFloat(actualContactsPerSale)) * 100)}%` }}
+                  />
+                </div>
               </div>
 
+              {/* Presentations per Sale */}
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium">Pres / Sale</span>
+                  <span className="text-sm font-medium">Presentations / Sale</span>
                   <div className="flex items-center gap-3">
-                    <span className="text-xs text-gray-500">Avg Needed: 3.0</span>
-                    <span className="text-xs text-gray-500">Jake's Actual: 3.2</span>
-                    <span className="text-sm font-semibold text-green-600">Gap: -0.2</span>
+                    <span className="text-xs text-gray-600">Goal: {goals.presentationsPerSale}</span>
+                    <span className="text-xs text-gray-600">Actual: {actualPresPerSale}</span>
+                    <Badge variant={presGap <= 0 ? "default" : "destructive"}>
+                      {presGap > 0 ? '+' : ''}{presGap.toFixed(1)}
+                    </Badge>
                   </div>
                 </div>
-                <Progress value={94} className="h-2" />
+                <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                  <div 
+                    className={`h-full ${presGap <= 0 ? 'bg-green-500' : 'bg-red-500'}`}
+                    style={{ width: `${Math.min(100, (goals.presentationsPerSale / parseFloat(actualPresPerSale)) * 100)}%` }}
+                  />
+                </div>
               </div>
 
+              {/* Stops per Contact */}
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm font-medium">Stops / Contact</span>
                   <div className="flex items-center gap-3">
-                    <span className="text-xs text-gray-500">Avg Needed: 1.8</span>
-                    <span className="text-xs text-gray-500">Jake's Actual: 1.3</span>
-                    <span className="text-sm font-semibold text-red-600">Gap: -0.5</span>
+                    <span className="text-xs text-gray-600">Goal: {goals.stopsPerContact}</span>
+                    <span className="text-xs text-gray-600">Actual: {actualStopsPerContact}</span>
+                    <Badge variant={stopsGap <= 0 ? "default" : "destructive"}>
+                      {stopsGap > 0 ? '+' : ''}{stopsGap.toFixed(1)}
+                    </Badge>
                   </div>
                 </div>
-                <Progress value={72} className="h-2" />
+                <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                  <div 
+                    className={`h-full ${stopsGap <= 0 ? 'bg-green-500' : 'bg-red-500'}`}
+                    style={{ width: `${Math.min(100, (goals.stopsPerContact / parseFloat(actualStopsPerContact)) * 100)}%` }}
+                  />
+                </div>
               </div>
             </div>
 
-            <div className="mt-8 pt-6 border-t">
-              <h4 className="font-semibold mb-4">Adjust Targets</h4>
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm text-gray-600">Increase Contacts +$ / Day</label>
-                  <Slider defaultValue={[0]} max={18} step={1} className="mt-2" />
-                </div>
-                <div>
-                  <label className="text-sm text-gray-600">Improve Close Rate +2%</label>
-                  <Slider defaultValue={[2]} max={10} step={1} className="mt-2" />
-                </div>
+            {/* Summary Stats */}
+            <div className="mt-6 pt-6 border-t grid grid-cols-3 gap-4">
+              <div>
+                <p className="text-xs text-gray-600">Total Contacts</p>
+                <p className="text-xl font-bold text-gray-900">{metrics?.contacts || 0}</p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-600">Total Sales</p>
+                <p className="text-xl font-bold text-blue-600">{metrics?.sales || 0}</p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-600">Close Rate</p>
+                <p className="text-xl font-bold text-green-600">{metrics?.closeRate || 0}%</p>
               </div>
             </div>
           </Card>
 
-          {/* Projected Impact */}
+          {/* Goal Setting Card */}
           <Card className="p-6">
-            <h3 className="text-lg font-semibold mb-6">Projected Impact</h3>
-            
-            <div className="space-y-6">
-              <div>
-                <p className="text-sm text-gray-600 mb-2">Weekly Revenue</p>
-                <div className="flex items-center gap-3">
-                  <span className="text-3xl font-semibold">$16,450</span>
-                  <span className="px-3 py-1 bg-green-100 text-green-700 rounded font-semibold text-sm">
-                    +$1,680
-                  </span>
-                  <span className="px-3 py-1 bg-red-100 text-red-700 rounded font-semibold text-sm">
-                    +$1,820
-                  </span>
-                </div>
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-2">
+                <TrendingUp className="size-5 text-green-600" />
+                <h3 className="text-lg font-semibold">Set Office Goals</h3>
               </div>
-
-              <div>
-                <p className="text-sm text-gray-600 mb-2">Monthly Revenue</p>
-                <div className="flex items-center gap-3">
-                  <span className="text-3xl font-semibold">$67,200</span>
-                  <span className="px-3 py-1 bg-green-100 text-green-700 rounded font-semibold text-sm">
-                    +$3,670
-                  </span>
-                  <span className="px-3 py-1 bg-red-100 text-red-700 rounded font-semibold text-sm">
-                    +$7,920
-                  </span>
-                </div>
-              </div>
+              {user.role === 'owner' || user.role === 'cydcor' ? (
+                <Button 
+                  onClick={handleSaveGoals} 
+                  disabled={saving || saved}
+                  size="sm"
+                  className="gap-2"
+                >
+                  {saving ? (
+                    <Loader2 className="size-4 animate-spin" />
+                  ) : saved ? (
+                    <CheckCircle2 className="size-4" />
+                  ) : (
+                    <Save className="size-4" />
+                  )}
+                  {saved ? 'Saved!' : 'Save Goals'}
+                </Button>
+              ) : (
+                <Badge variant="secondary">View Only</Badge>
+              )}
             </div>
 
-            <div className="mt-8 pt-6 border-t">
-              <h4 className="font-semibold mb-4">Key Insights</h4>
-              <div className="space-y-3">
-                <div className="p-4 bg-blue-50 border border-blue-200 rounded">
-                  <p className="text-sm text-blue-800">
-                    <strong>Strong Performance:</strong> Jake R. is performing above average in contacts per sale ratio.
-                  </p>
+            {user.role === 'owner' || user.role === 'cydcor' ? (
+              <div className="space-y-6">
+                {/* LOA Ratios */}
+                <div>
+                  <h4 className="text-sm font-semibold mb-3 text-gray-700">LOA Ratios</h4>
+                  <div className="space-y-3">
+                    <div>
+                      <Label htmlFor="contactsPerSale" className="text-xs">Contacts per Sale</Label>
+                      <Input
+                        id="contactsPerSale"
+                        type="number"
+                        value={goals.contactsPerSale}
+                        onChange={(e) => handleGoalChange('contactsPerSale', e.target.value)}
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="presPerSale" className="text-xs">Presentations per Sale</Label>
+                      <Input
+                        id="presPerSale"
+                        type="number"
+                        value={goals.presentationsPerSale}
+                        onChange={(e) => handleGoalChange('presentationsPerSale', e.target.value)}
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="stopsPerContact" className="text-xs">Stops per Contact</Label>
+                      <Input
+                        id="stopsPerContact"
+                        type="number"
+                        value={goals.stopsPerContact}
+                        onChange={(e) => handleGoalChange('stopsPerContact', e.target.value)}
+                        className="mt-1"
+                      />
+                    </div>
+                  </div>
                 </div>
-                <div className="p-4 bg-yellow-50 border border-yellow-200 rounded">
-                  <p className="text-sm text-yellow-800">
-                    <strong>Opportunity:</strong> Increasing stops per contact could improve overall conversion rate.
-                  </p>
+
+                {/* Daily Goals */}
+                <div>
+                  <h4 className="text-sm font-semibold mb-3 text-gray-700">Daily Targets</h4>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label htmlFor="dailyContacts" className="text-xs">Contacts</Label>
+                      <Input
+                        id="dailyContacts"
+                        type="number"
+                        value={goals.dailyContacts}
+                        onChange={(e) => handleGoalChange('dailyContacts', e.target.value)}
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="dailySales" className="text-xs">Sales</Label>
+                      <Input
+                        id="dailySales"
+                        type="number"
+                        value={goals.dailySales}
+                        onChange={(e) => handleGoalChange('dailySales', e.target.value)}
+                        className="mt-1"
+                      />
+                    </div>
+                  </div>
                 </div>
-                <div className="p-4 bg-green-50 border border-green-200 rounded">
-                  <p className="text-sm text-green-800">
-                    <strong>Target:</strong> With improved metrics, projected to reach $67K+ monthly revenue.
-                  </p>
+
+                {/* Weekly Goals */}
+                <div>
+                  <h4 className="text-sm font-semibold mb-3 text-gray-700">Weekly Targets</h4>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label htmlFor="weeklyContacts" className="text-xs">Contacts</Label>
+                      <Input
+                        id="weeklyContacts"
+                        type="number"
+                        value={goals.weeklyContacts}
+                        onChange={(e) => handleGoalChange('weeklyContacts', e.target.value)}
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="weeklySales" className="text-xs">Sales</Label>
+                      <Input
+                        id="weeklySales"
+                        type="number"
+                        value={goals.weeklySales}
+                        onChange={(e) => handleGoalChange('weeklySales', e.target.value)}
+                        className="mt-1"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Monthly Goals */}
+                <div>
+                  <h4 className="text-sm font-semibold mb-3 text-gray-700">Monthly Targets</h4>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label htmlFor="monthlyContacts" className="text-xs">Contacts</Label>
+                      <Input
+                        id="monthlyContacts"
+                        type="number"
+                        value={goals.monthlyContacts}
+                        onChange={(e) => handleGoalChange('monthlyContacts', e.target.value)}
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="monthlySales" className="text-xs">Sales</Label>
+                      <Input
+                        id="monthlySales"
+                        type="number"
+                        value={goals.monthlySales}
+                        onChange={(e) => handleGoalChange('monthlySales', e.target.value)}
+                        className="mt-1"
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="p-4 bg-blue-50 rounded-lg">
+                  <h4 className="text-sm font-semibold mb-2">Daily Targets</h4>
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div>Contacts: <span className="font-bold">{goals.dailyContacts}</span></div>
+                    <div>Sales: <span className="font-bold">{goals.dailySales}</span></div>
+                  </div>
+                </div>
+                <div className="p-4 bg-green-50 rounded-lg">
+                  <h4 className="text-sm font-semibold mb-2">Weekly Targets</h4>
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div>Contacts: <span className="font-bold">{goals.weeklyContacts}</span></div>
+                    <div>Sales: <span className="font-bold">{goals.weeklySales}</span></div>
+                  </div>
+                </div>
+                <div className="p-4 bg-purple-50 rounded-lg">
+                  <h4 className="text-sm font-semibold mb-2">Monthly Targets</h4>
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div>Contacts: <span className="font-bold">{goals.monthlyContacts}</span></div>
+                    <div>Sales: <span className="font-bold">{goals.monthlySales}</span></div>
+                  </div>
+                </div>
+              </div>
+            )}
           </Card>
         </div>
-
-        {/* Product Mix */}
-        <Card className="p-6 mt-6">
-          <h3 className="text-lg font-semibold mb-4">Product Mix</h3>
-          <div className="flex gap-4">
-            <div className="flex-1">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm">Product A</span>
-                <span className="text-sm font-semibold">30%</span>
-              </div>
-              <Progress value={30} className="h-3" />
-            </div>
-            <div className="flex-1">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm">Product B</span>
-                <span className="text-sm font-semibold">30%</span>
-              </div>
-              <Progress value={30} className="h-3" />
-            </div>
-            <div className="flex-1">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm">Product C</span>
-                <span className="text-sm font-semibold">10%</span>
-              </div>
-              <Progress value={10} className="h-3" />
-            </div>
-          </div>
-        </Card>
       </div>
     </div>
   );

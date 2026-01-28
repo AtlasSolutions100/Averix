@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, Component, ErrorInfo, ReactNode } from "react";
 import { LoginPage } from "@/app/components/LoginPage";
+import { DebugAuthPage } from "@/app/components/DebugAuthPage";
 import { OwnerLayout } from "@/app/components/OwnerLayout";
 import { RepLayout } from "@/app/components/RepLayout";
 import { Toaster } from "@/app/components/ui/sonner";
@@ -16,27 +17,135 @@ export interface User {
   avatar?: string;
 }
 
-export default function App() {
+// Error Boundary Component
+class ErrorBoundary extends Component<
+  { children: ReactNode },
+  { hasError: boolean; error: Error | null }
+> {
+  constructor(props: { children: ReactNode }) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error('Error caught by boundary:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="flex items-center justify-center h-screen bg-gray-50">
+          <div className="text-center max-w-md p-8">
+            <div className="w-16 h-16 bg-red-500 rounded-lg flex items-center justify-center mx-auto mb-4">
+              <span className="text-2xl font-bold text-white">!</span>
+            </div>
+            <h1 className="text-xl font-bold text-gray-900 mb-2">Something went wrong</h1>
+            <p className="text-gray-600 mb-4">
+              {this.state.error?.message || 'An unexpected error occurred'}
+            </p>
+            <button 
+              onClick={() => window.location.reload()} 
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            >
+              Reload Page
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
+function AppContent() {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [showDebug, setShowDebug] = useState(false);
 
   useEffect(() => {
-    // Check for existing session
-    const storedUser = localStorage.getItem("averix_user");
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-    setIsLoading(false);
+    // Initialize config synchronously
+    const initAndCheckSession = async () => {
+      try {
+        // Load Supabase config first
+        const { projectId, publicAnonKey } = await import('/utils/supabase/info');
+        
+        // Store in window for API to use
+        (window as any).__supabaseInfo = {
+          projectId,
+          publicAnonKey,
+        };
+        
+        console.log('✅ Config loaded:', { projectId, hasKey: !!publicAnonKey });
+
+        // Small delay to ensure config is fully loaded
+        await new Promise(resolve => setTimeout(resolve, 100));
+
+        // Test server health
+        try {
+          const healthUrl = `https://${projectId}.supabase.co/functions/v1/make-server-45dc47a9/health`;
+          console.log('🏥 Testing server health:', healthUrl);
+          
+          const healthResponse = await fetch(healthUrl, {
+            headers: {
+              'Authorization': `Bearer ${publicAnonKey}`,
+            },
+          });
+          
+          if (healthResponse.ok) {
+            const healthData = await healthResponse.json();
+            console.log('✅ Server is healthy:', healthData);
+          } else {
+            console.warn('⚠️ Server health check failed:', healthResponse.status, healthResponse.statusText);
+          }
+        } catch (healthError) {
+          console.warn('⚠️ Server health check error (this is OK if server not deployed yet):', healthError);
+        }
+
+        // Now check for existing session
+        const { authAPI } = await import('@/services/api');
+        
+        const session = await authAPI.getSession();
+        if (session) {
+          console.log('✅ Session found, fetching user...');
+          try {
+            const userData = await authAPI.getMe();
+            console.log('✅ User loaded:', userData.name);
+            setUser(userData);
+          } catch (userError: any) {
+            console.error('❌ Failed to load user profile:', userError.message);
+            // Clear invalid session
+            await authAPI.signOut();
+          }
+        } else {
+          console.log('ℹ️ No active session found (user needs to log in)');
+        }
+      } catch (error) {
+        console.error('❌ Initialization failed:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    initAndCheckSession();
   }, []);
 
   const handleLogin = (userData: User) => {
     setUser(userData);
-    localStorage.setItem("averix_user", JSON.stringify(userData));
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      const { authAPI } = await import('@/services/api');
+      await authAPI.signOut();
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
     setUser(null);
-    localStorage.removeItem("averix_user");
   };
 
   if (isLoading) {
@@ -52,10 +161,28 @@ export default function App() {
     );
   }
 
+  // Debug mode
+  if (showDebug) {
+    return (
+      <>
+        <DebugAuthPage />
+        <div className="fixed bottom-4 right-4">
+          <button
+            onClick={() => setShowDebug(false)}
+            className="bg-gray-800 text-white px-4 py-2 rounded-lg shadow-lg hover:bg-gray-700"
+          >
+            ← Back to Login
+          </button>
+        </div>
+        <Toaster />
+      </>
+    );
+  }
+
   if (!user) {
     return (
       <>
-        <LoginPage onLogin={handleLogin} />
+        <LoginPage onLogin={handleLogin} onShowDebug={() => setShowDebug(true)} />
         <Toaster />
       </>
     );
@@ -76,5 +203,13 @@ export default function App() {
       <RepLayout user={user} onLogout={handleLogout} />
       <Toaster />
     </>
+  );
+}
+
+export default function App() {
+  return (
+    <ErrorBoundary>
+      <AppContent />
+    </ErrorBoundary>
   );
 }

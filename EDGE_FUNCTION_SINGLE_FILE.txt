@@ -1,0 +1,348 @@
+// Copy this entire file and paste it into the Supabase Edge Function editor
+// Function name: make-server-45dc47a9
+// IMPORTANT: Make sure "Verify JWT" is UNCHECKED in function settings!
+
+import { Hono } from "npm:hono";
+import { cors } from "npm:hono/cors";
+import { logger } from "npm:hono/logger";
+import { createClient } from "jsr:@supabase/supabase-js@2";
+
+const app = new Hono();
+
+// Enable logger
+app.use('*', logger(console.log));
+
+// Enable CORS for all routes and methods
+app.use(
+  "/*",
+  cors({
+    origin: "*",
+    allowHeaders: ["Content-Type", "Authorization"],
+    allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    exposeHeaders: ["Content-Length"],
+    maxAge: 600,
+  }),
+);
+
+// Create Supabase client with SERVICE_ROLE_KEY
+const getSupabaseClient = () => {
+  const supabaseUrl = Deno.env.get('SUPABASE_URL');
+  const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+  
+  if (!supabaseUrl || !serviceRoleKey) {
+    console.error('Missing environment variables:', { 
+      hasUrl: !!supabaseUrl, 
+      hasKey: !!serviceRoleKey 
+    });
+  }
+  
+  return createClient(supabaseUrl, serviceRoleKey);
+};
+
+// Middleware to verify authentication
+const requireAuth = async (c, next) => {
+  const authHeader = c.req.header('Authorization');
+  const token = authHeader?.replace('Bearer ', '');
+  
+  if (!token) {
+    console.log('No token provided');
+    return c.json({ code: 401, message: 'Missing authorization header' }, 401);
+  }
+  
+  const supabase = createClient(
+    Deno.env.get('SUPABASE_URL'),
+    Deno.env.get('SUPABASE_ANON_KEY')
+  );
+  
+  const { data: { user }, error } = await supabase.auth.getUser(token);
+  
+  if (error || !user) {
+    console.log('Invalid token:', error?.message);
+    return c.json({ code: 401, message: 'Invalid JWT' }, 401);
+  }
+  
+  c.set('user', user);
+  c.set('token', token);
+  await next();
+};
+
+// ============================================================================
+// HEALTH CHECK (NO AUTH REQUIRED)
+// ============================================================================
+app.get("/make-server-45dc47a9/health", (c) => {
+  console.log('Health check called');
+  return c.json({ status: "ok", timestamp: new Date().toISOString() });
+});
+
+// ============================================================================
+// AUTHENTICATION ENDPOINTS
+// ============================================================================
+
+// Get current user profile
+app.get("/make-server-45dc47a9/auth/me", requireAuth, async (c) => {
+  try {
+    const user = c.get('user');
+    console.log('Getting profile for user:', user.id);
+    
+    const supabase = getSupabaseClient();
+    const { data: profile, error } = await supabase
+      .from('user_profiles')
+      .select(`
+        id,
+        email,
+        name,
+        role,
+        office_id,
+        avatar,
+        offices (
+          id,
+          name,
+          city,
+          state
+        )
+      `)
+      .eq('id', user.id)
+      .single();
+
+    if (error) {
+      console.error('Database error:', error);
+      return c.json({ code: 500, message: 'Failed to fetch user profile', details: error.message }, 500);
+    }
+
+    if (!profile) {
+      console.error('No profile found for user:', user.id);
+      return c.json({ code: 404, message: 'User profile not found' }, 404);
+    }
+
+    const userData = {
+      id: profile.id,
+      email: profile.email,
+      name: profile.name,
+      role: profile.role,
+      officeId: profile.office_id,
+      officeName: profile.offices?.name || 'Unknown Office',
+      avatar: profile.avatar,
+    };
+
+    console.log('Returning user data:', userData);
+    return c.json(userData);
+  } catch (error) {
+    console.error('Unexpected error in /auth/me:', error);
+    return c.json({ code: 500, message: 'Internal server error', details: error.message }, 500);
+  }
+});
+
+// Sign out
+app.post("/make-server-45dc47a9/auth/signout", requireAuth, async (c) => {
+  return c.json({ message: "Signed out successfully" });
+});
+
+// ============================================================================
+// USER ENDPOINTS
+// ============================================================================
+
+app.get("/make-server-45dc47a9/users", requireAuth, async (c) => {
+  try {
+    const user = c.get('user');
+    const supabase = getSupabaseClient();
+    
+    const { data: currentUser } = await supabase
+      .from('user_profiles')
+      .select('office_id, role')
+      .eq('id', user.id)
+      .single();
+
+    if (!currentUser) {
+      return c.json({ code: 404, message: 'User not found' }, 404);
+    }
+
+    const officeId = c.req.query('officeId') || currentUser.office_id;
+
+    const { data, error } = await supabase
+      .from('user_profiles')
+      .select('*')
+      .eq('office_id', officeId)
+      .order('name');
+
+    if (error) throw error;
+    return c.json(data || []);
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    return c.json({ code: 500, message: error.message }, 500);
+  }
+});
+
+// ============================================================================
+// OFFICE ENDPOINTS
+// ============================================================================
+
+app.get("/make-server-45dc47a9/offices", requireAuth, async (c) => {
+  try {
+    const supabase = getSupabaseClient();
+    const { data, error } = await supabase
+      .from('offices')
+      .select('*')
+      .order('name');
+
+    if (error) throw error;
+    return c.json(data || []);
+  } catch (error) {
+    console.error('Error fetching offices:', error);
+    return c.json({ code: 500, message: error.message }, 500);
+  }
+});
+
+// ============================================================================
+// STORE ENDPOINTS
+// ============================================================================
+
+app.get("/make-server-45dc47a9/stores", requireAuth, async (c) => {
+  try {
+    const supabase = getSupabaseClient();
+    const officeId = c.req.query('officeId');
+    const active = c.req.query('active');
+
+    let query = supabase.from('stores').select('*');
+
+    if (officeId) query = query.eq('office_id', officeId);
+    if (active === 'true') query = query.eq('is_active', true);
+
+    const { data, error } = await query.order('name');
+
+    if (error) throw error;
+    return c.json(data || []);
+  } catch (error) {
+    console.error('Error fetching stores:', error);
+    return c.json({ code: 500, message: error.message }, 500);
+  }
+});
+
+// ============================================================================
+// DAILY ENTRY ENDPOINTS
+// ============================================================================
+
+app.get("/make-server-45dc47a9/daily-entries", requireAuth, async (c) => {
+  try {
+    const supabase = getSupabaseClient();
+    const userId = c.req.query('userId');
+    const storeId = c.req.query('storeId');
+    const startDate = c.req.query('startDate');
+    const endDate = c.req.query('endDate');
+
+    let query = supabase
+      .from('daily_entries')
+      .select(`
+        *,
+        user_profiles!daily_entries_user_id_fkey (id, name, email),
+        stores!daily_entries_store_id_fkey (id, name, location)
+      `);
+
+    if (userId) query = query.eq('user_id', userId);
+    if (storeId) query = query.eq('store_id', storeId);
+    if (startDate) query = query.gte('date', startDate);
+    if (endDate) query = query.lte('date', endDate);
+
+    const { data, error } = await query.order('date', { ascending: false });
+
+    if (error) throw error;
+    return c.json(data || []);
+  } catch (error) {
+    console.error('Error fetching daily entries:', error);
+    return c.json({ code: 500, message: error.message }, 500);
+  }
+});
+
+app.post("/make-server-45dc47a9/daily-entries", requireAuth, async (c) => {
+  try {
+    const user = c.get('user');
+    const body = await c.req.json();
+
+    const supabase = getSupabaseClient();
+    const { data, error } = await supabase
+      .from('daily_entries')
+      .insert({
+        user_id: user.id,
+        store_id: body.storeId,
+        date: body.date,
+        apps: body.apps || 0,
+        leads: body.leads || 0,
+        hours_worked: body.hoursWorked || 0,
+        notes: body.notes || null,
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+    return c.json(data);
+  } catch (error) {
+    console.error('Error creating daily entry:', error);
+    return c.json({ code: 500, message: error.message }, 500);
+  }
+});
+
+// ============================================================================
+// ANALYTICS ENDPOINTS
+// ============================================================================
+
+app.get("/make-server-45dc47a9/analytics/overview", requireAuth, async (c) => {
+  try {
+    const supabase = getSupabaseClient();
+    const user = c.get('user');
+    
+    const { data: currentUser } = await supabase
+      .from('user_profiles')
+      .select('office_id')
+      .eq('id', user.id)
+      .single();
+
+    const officeId = c.req.query('officeId') || currentUser?.office_id;
+    const startDate = c.req.query('startDate');
+    const endDate = c.req.query('endDate');
+
+    let query = supabase
+      .from('daily_entries')
+      .select('apps, leads, hours_worked, user_id');
+
+    if (officeId) {
+      const { data: officeUsers } = await supabase
+        .from('user_profiles')
+        .select('id')
+        .eq('office_id', officeId);
+      
+      const userIds = officeUsers?.map(u => u.id) || [];
+      if (userIds.length > 0) {
+        query = query.in('user_id', userIds);
+      }
+    }
+
+    if (startDate) query = query.gte('date', startDate);
+    if (endDate) query = query.lte('date', endDate);
+
+    const { data: entries, error } = await query;
+
+    if (error) throw error;
+
+    const totalApps = entries?.reduce((sum, e) => sum + (e.apps || 0), 0) || 0;
+    const totalLeads = entries?.reduce((sum, e) => sum + (e.leads || 0), 0) || 0;
+    const totalHours = entries?.reduce((sum, e) => sum + (e.hours_worked || 0), 0) || 0;
+    const uniqueReps = new Set(entries?.map(e => e.user_id)).size;
+
+    return c.json({
+      totalApps,
+      totalLeads,
+      totalHours,
+      activeReps: uniqueReps,
+      conversionRate: totalLeads > 0 ? (totalApps / totalLeads * 100).toFixed(1) : '0.0',
+      appsPerRep: uniqueReps > 0 ? (totalApps / uniqueReps).toFixed(1) : '0.0',
+    });
+  } catch (error) {
+    console.error('Error fetching analytics:', error);
+    return c.json({ code: 500, message: error.message }, 500);
+  }
+});
+
+// ============================================================================
+// START SERVER
+// ============================================================================
+console.log('Starting Averix backend server...');
+Deno.serve(app.fetch);

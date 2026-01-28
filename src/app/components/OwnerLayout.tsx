@@ -116,11 +116,11 @@ export function OwnerLayout({ user, onLogout }: OwnerLayoutProps) {
 
         {/* View Content */}
         <div className="flex-1 overflow-auto">
-          {currentView === "dashboard" && <OwnerDashboardView />}
-          {currentView === "reps" && <RepsView />}
-          {currentView === "stores" && <StoresView />}
-          {currentView === "loa" && <LOAAnalyzerView />}
-          {currentView === "reports" && <ReportsView />}
+          {currentView === "dashboard" && <OwnerDashboardView user={user} />}
+          {currentView === "reps" && <RepsView user={user} />}
+          {currentView === "stores" && <StoresView user={user} />}
+          {currentView === "loa" && <LOAAnalyzerView user={user} />}
+          {currentView === "reports" && <ReportsView user={user} />}
           {currentView === "admin" && (
             <div className="flex items-center justify-center h-full">
               <p className="text-gray-500">Admin settings coming soon</p>

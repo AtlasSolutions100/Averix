@@ -1,40 +1,68 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "@/app/components/ui/card";
 import { Input } from "@/app/components/ui/input";
 import { Label } from "@/app/components/ui/label";
 import { Button } from "@/app/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/app/components/ui/select";
-import { Calendar, CheckCircle2 } from "lucide-react";
+import { Calendar, CheckCircle2, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
+import { entriesAPI, storesAPI } from "@/services/api";
+import { useTracker } from "@/contexts/TrackerContext";
 import type { User } from "@/app/App";
 
 interface DailyEntryViewProps {
   user: User;
 }
 
-const STORES = [
-  { id: "1", name: "Best Buy NFW", location: "North Fort Worth" },
-  { id: "2", name: "Best Buy SFW", location: "South Fort Worth" },
-  { id: "3", name: "Target Terhama", location: "Terhama" },
-  { id: "4", name: "Target Arlington", location: "Arlington" },
-];
-
 export function DailyEntryView({ user }: DailyEntryViewProps) {
-  const [store, setStore] = useState("");
+  const [stores, setStores] = useState<any[]>([]);
+  const [loadingStores, setLoadingStores] = useState(true);
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   
-  // LOA Metrics
+  const { tracker, selectedStore, setSelectedStore } = useTracker();
+  
+  // LOA Metrics - auto-populated from tracker
   const [stops, setStops] = useState("");
   const [contacts, setContacts] = useState("");
   const [presentations, setPresentations] = useState("");
   const [addressChecks, setAddressChecks] = useState("");
   const [creditChecks, setCreditChecks] = useState("");
   const [sales, setSales] = useState("");
-  const [applications, setApplications] = useState("");
+  const [products, setProducts] = useState("");
   
   // Additional metrics
   const [hoursWorked, setHoursWorked] = useState("");
   const [revenue, setRevenue] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  // Auto-populate from tracker whenever tracker changes
+  useEffect(() => {
+    setStops(tracker.stops > 0 ? tracker.stops.toString() : "");
+    setContacts(tracker.contacts > 0 ? tracker.contacts.toString() : "");
+    setPresentations(tracker.presentations > 0 ? tracker.presentations.toString() : "");
+    setAddressChecks(tracker.addressChecks > 0 ? tracker.addressChecks.toString() : "");
+    setCreditChecks(tracker.creditChecks > 0 ? tracker.creditChecks.toString() : "");
+    setSales(tracker.sales > 0 ? tracker.sales.toString() : "");
+    setProducts(tracker.products > 0 ? tracker.products.toString() : "");
+  }, [tracker]);
+
+  // Load stores on mount
+  useEffect(() => {
+    const loadStores = async () => {
+      try {
+        const { stores: storesList } = await storesAPI.getStores();
+        setStores(storesList || []);
+      } catch (error: any) {
+        console.error('Failed to load stores:', error);
+        toast.error("Failed to load stores", {
+          description: error.message
+        });
+      } finally {
+        setLoadingStores(false);
+      }
+    };
+    loadStores();
+  }, []);
 
   // Calculate conversion rates
   const contactRate = stops && contacts ? ((parseInt(contacts) / parseInt(stops)) * 100).toFixed(1) : "0.0";
@@ -45,54 +73,53 @@ export function DailyEntryView({ user }: DailyEntryViewProps) {
   const overallCloseRate = contacts && sales ? ((parseInt(sales) / parseInt(contacts)) * 100).toFixed(1) : "0.0";
   const revenuePerContact = contacts && revenue ? (parseFloat(revenue) / parseInt(contacts)).toFixed(2) : "0.00";
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!store) {
+    if (!selectedStore) {
       toast.error("Please select a store");
       return;
     }
 
-    const entry = {
-      userId: user.id,
-      userName: user.name,
-      store,
-      date,
-      stops: parseInt(stops) || 0,
-      contacts: parseInt(contacts) || 0,
-      presentations: parseInt(presentations) || 0,
-      addressChecks: parseInt(addressChecks) || 0,
-      creditChecks: parseInt(creditChecks) || 0,
-      sales: parseInt(sales) || 0,
-      applications: parseInt(applications) || 0,
-      hoursWorked: parseFloat(hoursWorked) || 0,
-      revenue: parseFloat(revenue) || 0,
-      metrics: {
-        contactRate,
-        presentationRate,
-        closeRate,
-        overallCloseRate,
-        revenuePerContact
-      }
-    };
+    setSubmitting(true);
 
-    console.log("Daily entry:", entry);
-    
-    // TODO: Save to backend
-    toast.success("Daily entry saved successfully!", {
-      description: `${sales} sales recorded for ${STORES.find(s => s.id === store)?.name}`
-    });
+    try {
+      await entriesAPI.submit({
+        storeId: selectedStore,
+        date,
+        stops: parseInt(stops) || 0,
+        contacts: parseInt(contacts) || 0,
+        presentations: parseInt(presentations) || 0,
+        addressChecks: parseInt(addressChecks) || 0,
+        creditChecks: parseInt(creditChecks) || 0,
+        sales: parseInt(sales) || 0,
+        applications: parseInt(products) || 0, // Map products to applications in database
+        hoursWorked: parseFloat(hoursWorked) || 0,
+        revenue: parseFloat(revenue) || 0,
+      });
 
-    // Reset form
-    setStops("");
-    setContacts("");
-    setPresentations("");
-    setAddressChecks("");
-    setCreditChecks("");
-    setSales("");
-    setApplications("");
-    setHoursWorked("");
-    setRevenue("");
+      toast.success("Daily entry saved successfully!", {
+        description: `${sales} sales recorded for ${stores.find(s => s.id === selectedStore)?.name}`
+      });
+
+      // Reset form
+      setStops("");
+      setContacts("");
+      setPresentations("");
+      setAddressChecks("");
+      setCreditChecks("");
+      setSales("");
+      setProducts("");
+      setHoursWorked("");
+      setRevenue("");
+    } catch (error: any) {
+      console.error('Failed to submit entry:', error);
+      toast.error("Failed to save entry", {
+        description: error.message
+      });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -108,16 +135,20 @@ export function DailyEntryView({ user }: DailyEntryViewProps) {
           <div className="space-y-4">
             <div>
               <Label htmlFor="store">Store Location *</Label>
-              <Select value={store} onValueChange={setStore}>
-                <SelectTrigger className="mt-1">
+              <Select value={selectedStore} onValueChange={setSelectedStore}>
+                <SelectTrigger>
                   <SelectValue placeholder="Select a store" />
                 </SelectTrigger>
                 <SelectContent>
-                  {STORES.map((s) => (
-                    <SelectItem key={s.id} value={s.id}>
-                      {s.name} - {s.location}
-                    </SelectItem>
-                  ))}
+                  {loadingStores ? (
+                    <SelectItem value="loading" disabled>Loading stores...</SelectItem>
+                  ) : (
+                    stores.map((s) => (
+                      <SelectItem key={s.id} value={s.id}>
+                        {s.name} - {s.location}
+                      </SelectItem>
+                    ))
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -234,16 +265,16 @@ export function DailyEntryView({ user }: DailyEntryViewProps) {
             </div>
 
             <div>
-              <Label htmlFor="applications">7. Applications</Label>
+              <Label htmlFor="products">7. Products</Label>
               <Input
-                id="applications"
+                id="products"
                 type="number"
                 placeholder="0"
-                value={applications}
-                onChange={(e) => setApplications(e.target.value)}
+                value={products}
+                onChange={(e) => setProducts(e.target.value)}
                 className="mt-1 text-lg"
               />
-              <p className="text-xs text-gray-500 mt-1">Total applications submitted</p>
+              <p className="text-xs text-gray-500 mt-1">Total products sold</p>
             </div>
           </div>
         </Card>

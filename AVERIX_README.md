@@ -4,6 +4,21 @@
 
 Averix is the first Law-of-Averages intelligence platform built specifically for Cydcor owners and national retail sales teams.
 
+---
+
+## 🚀 **FIRST TIME SETUP REQUIRED**
+
+**👉 See [QUICK_START.md](./QUICK_START.md) for 5-minute setup instructions**
+
+You need to:
+1. Run SQL to create database tables (2 min)
+2. Create demo users in Supabase (3 min)
+3. Login and start using Averix! 🎉
+
+**Alternative:** Full detailed setup guide available in [SETUP_GUIDE.md](./SETUP_GUIDE.md)
+
+---
+
 ## 🎯 What is Averix?
 
 Averix transforms retail sales hustle into mathematical insights. It tracks every step of your sales funnel—from initial stops to closed deals—giving owners and reps real-time visibility into what actually drives revenue.
