@@ -4,6 +4,7 @@ import { SignupPage } from "@/app/components/SignupPage";
 import { OwnerLayout } from "@/app/components/OwnerLayout";
 import { RepLayout } from "@/app/components/RepLayout";
 import { Toaster } from "@/app/components/ui/sonner";
+import { useSEO, SEO_CONFIGS } from "@/hooks/useSEO";
 
 export type UserRole = "owner" | "rep" | "cydcor";
 

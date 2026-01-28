@@ -1,32 +1,53 @@
-import { useState } from "react";
-import { LogOut, BarChart3, Store, Target, History, Menu, X, ClipboardCheck } from "lucide-react";
+import { ReactNode, useState, useEffect } from "react";
+import { LogOut, LayoutDashboard, Store, Target, TrendingUp, Clock, History, Grid, Bell, Menu, X } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
-import { LiveTrackerView } from "@/app/components/LiveTrackerView";
-import { RepDashboardView } from "@/app/components/RepDashboardView";
-import { StoresView } from "@/app/components/StoresView";
-import { RepHistoryView } from "@/app/components/RepHistoryView";
-import { DailyEntryView } from "@/app/components/DailyEntryView";
-import { TrackerProvider } from "@/contexts/TrackerContext";
-import type { User } from "@/app/App";
 import { VeridexLogo } from "@/app/components/VeridexLogo";
+import { User } from "@/app/App";
+import { RepDashboardView } from "@/app/components/RepDashboardView";
+import { LiveTrackerView } from "@/app/components/LiveTrackerView";
+import { DailyEntryView } from "@/app/components/DailyEntryView";
+import { RepHistoryView } from "@/app/components/RepHistoryView";
+import { ReportsView } from "@/app/components/ReportsView";
+import { TrackerProvider } from "@/contexts/TrackerContext";
+import { useSEO, SEO_CONFIGS } from "@/hooks/useSEO";
 
 interface RepLayoutProps {
   user: User;
   onLogout: () => void;
 }
 
-type ViewType = "dashboard" | "tracker" | "daily" | "stores" | "history";
+type ViewType = "dashboard" | "liveTracker" | "dailyEntry" | "history" | "reports";
 
 export function RepLayout({ user, onLogout }: RepLayoutProps) {
-  const [currentView, setCurrentView] = useState<ViewType>("tracker");
+  const [currentView, setCurrentView] = useState<ViewType>("dashboard");
   const [menuOpen, setMenuOpen] = useState(false);
 
+  // Update SEO based on current view
+  useEffect(() => {
+    const seoMap: Record<ViewType, typeof SEO_CONFIGS[keyof typeof SEO_CONFIGS]> = {
+      dashboard: SEO_CONFIGS.repDashboard,
+      liveTracker: SEO_CONFIGS.liveTracker,
+      dailyEntry: SEO_CONFIGS.dailyEntry,
+      history: SEO_CONFIGS.history,
+      reports: SEO_CONFIGS.reports,
+    };
+
+    const seoConfig = seoMap[currentView] || SEO_CONFIGS.repDashboard;
+    document.title = seoConfig.title;
+    
+    // Update meta description
+    const metaDescription = document.querySelector('meta[name="description"]') as HTMLMetaElement;
+    if (metaDescription) {
+      metaDescription.content = seoConfig.description;
+    }
+  }, [currentView]);
+
   const menuItems = [
-    { id: "dashboard" as ViewType, label: "Dashboard", icon: BarChart3 },
-    { id: "tracker" as ViewType, label: "Live Tracker", icon: Target },
-    { id: "daily" as ViewType, label: "Daily Entry", icon: ClipboardCheck },
-    { id: "stores" as ViewType, label: "My Stores", icon: Store },
+    { id: "dashboard" as ViewType, label: "Dashboard", icon: LayoutDashboard },
+    { id: "liveTracker" as ViewType, label: "Live Tracker", icon: Target },
+    { id: "dailyEntry" as ViewType, label: "Daily Entry", icon: Clock },
     { id: "history" as ViewType, label: "History", icon: History },
+    { id: "reports" as ViewType, label: "Reports", icon: Grid },
   ];
 
   return (
@@ -134,10 +155,10 @@ export function RepLayout({ user, onLogout }: RepLayoutProps) {
           {/* Main Content */}
           <div className="flex-1 overflow-auto">
             {currentView === "dashboard" && <RepDashboardView user={user} />}
-            {currentView === "tracker" && <LiveTrackerView user={user} />}
-            {currentView === "daily" && <DailyEntryView user={user} />}
-            {currentView === "stores" && <StoresView user={user} />}
+            {currentView === "liveTracker" && <LiveTrackerView user={user} />}
+            {currentView === "dailyEntry" && <DailyEntryView user={user} />}
             {currentView === "history" && <RepHistoryView user={user} />}
+            {currentView === "reports" && <ReportsView user={user} />}
           </div>
         </div>
 

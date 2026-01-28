@@ -1,4 +1,4 @@
-import { ReactNode, useState } from "react";
+import { ReactNode, useState, useEffect } from "react";
 import { LogOut, LayoutDashboard, Users, Store, Target, TrendingUp, Settings, Grid, Bell, UsersRound, Building2, ClipboardList, PieChart } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
 import { VeridexLogo } from "@/app/components/VeridexLogo";
@@ -13,6 +13,7 @@ import { StoreManagementView } from "@/app/components/StoreManagementView";
 import { OfficeSettingsView } from "@/app/components/OfficeSettingsView";
 import { EntriesView } from "@/app/components/EntriesView";
 import { StorePerformanceView } from "@/app/components/StorePerformanceView";
+import { useSEO, SEO_CONFIGS } from "@/hooks/useSEO";
 
 interface OwnerLayoutProps {
   user: User;
@@ -23,6 +24,31 @@ type ViewType = "dashboard" | "reps" | "stores" | "loa" | "goals" | "team" | "st
 
 export function OwnerLayout({ user, onLogout }: OwnerLayoutProps) {
   const [currentView, setCurrentView] = useState<ViewType>("dashboard");
+
+  // Update SEO based on current view
+  useEffect(() => {
+    const seoMap: Record<ViewType, typeof SEO_CONFIGS[keyof typeof SEO_CONFIGS]> = {
+      dashboard: SEO_CONFIGS.ownerDashboard,
+      reps: SEO_CONFIGS.reps,
+      stores: SEO_CONFIGS.stores,
+      loa: SEO_CONFIGS.loaAnalyzer,
+      goals: SEO_CONFIGS.goals,
+      team: SEO_CONFIGS.teamManagement,
+      storeManagement: SEO_CONFIGS.storeManagement,
+      officeSettings: SEO_CONFIGS.officeSettings,
+      entries: SEO_CONFIGS.entries,
+      storePerformance: SEO_CONFIGS.storePerformance,
+    };
+
+    const seoConfig = seoMap[currentView] || SEO_CONFIGS.ownerDashboard;
+    document.title = seoConfig.title;
+    
+    // Update meta description
+    const metaDescription = document.querySelector('meta[name="description"]') as HTMLMetaElement;
+    if (metaDescription) {
+      metaDescription.content = seoConfig.description;
+    }
+  }, [currentView]);
 
   const menuItems = [
     { id: "dashboard" as ViewType, label: "Dashboard", icon: LayoutDashboard },

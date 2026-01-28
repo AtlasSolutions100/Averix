@@ -1,13 +1,15 @@
 import { useState } from "react";
-import { Card } from "@/app/components/ui/card";
-import { Input } from "@/app/components/ui/input";
 import { Button } from "@/app/components/ui/button";
+import { Input } from "@/app/components/ui/input";
 import { Label } from "@/app/components/ui/label";
-import { toast } from "sonner";
-import { authAPI } from "@/services/api";
-import type { User } from "@/app/App";
+import { Card } from "@/app/components/ui/card";
+import { RadioGroup, RadioGroupItem } from "@/app/components/ui/radio-group";
 import { VeridexLogo } from "@/app/components/VeridexLogo";
 import { ArrowLeft } from "lucide-react";
+import { authAPI } from "@/services/api";
+import { toast } from "sonner";
+import type { User } from "@/app/App";
+import { useSEO, SEO_CONFIGS } from "@/hooks/useSEO";
 
 interface SignupPageProps {
   onSignup: (user: User) => void;
@@ -21,8 +23,11 @@ export function SignupPage({ onSignup, onBackToLogin }: SignupPageProps) {
   const [role, setRole] = useState<"owner" | "rep">("owner");
   const [officeName, setOfficeName] = useState("");
   const [officeId, setOfficeId] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Set SEO for signup page
+  useSEO(SEO_CONFIGS.signup);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -170,34 +175,22 @@ export function SignupPage({ onSignup, onBackToLogin }: SignupPageProps) {
               <Label className="text-foreground mb-2 block">
                 I am a... <span className="text-destructive">*</span>
               </Label>
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  type="button"
-                  onClick={() => setRole("owner")}
-                  className={`p-4 rounded-lg border-2 transition-all ${
-                    role === "owner"
-                      ? "border-primary bg-primary/10"
-                      : "border-border bg-secondary/50 hover:border-border/60"
-                  }`}
-                >
+              <RadioGroup
+                value={role}
+                onValueChange={(value) => setRole(value as "owner" | "rep")}
+                className="grid grid-cols-2 gap-3"
+              >
+                <RadioGroupItem value="owner" className="p-4 rounded-lg border-2 transition-all">
                   <div className="font-semibold text-foreground">Office Owner</div>
                   <div className="text-xs text-muted-foreground mt-1">
                     Manage team & analytics
                   </div>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setRole("rep")}
-                  className={`p-4 rounded-lg border-2 transition-all ${
-                    role === "rep"
-                      ? "border-primary bg-primary/10"
-                      : "border-border bg-secondary/50 hover:border-border/60"
-                  }`}
-                >
+                </RadioGroupItem>
+                <RadioGroupItem value="rep" className="p-4 rounded-lg border-2 transition-all">
                   <div className="font-semibold text-foreground">Sales Rep</div>
                   <div className="text-xs text-muted-foreground mt-1">Track my performance</div>
-                </button>
-              </div>
+                </RadioGroupItem>
+              </RadioGroup>
             </div>
 
             {/* Conditional Fields Based on Role */}

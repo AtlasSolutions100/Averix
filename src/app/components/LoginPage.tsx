@@ -1,12 +1,13 @@
 import { useState } from "react";
-import { Card } from "@/app/components/ui/card";
-import { Input } from "@/app/components/ui/input";
 import { Button } from "@/app/components/ui/button";
+import { Input } from "@/app/components/ui/input";
 import { Label } from "@/app/components/ui/label";
-import { toast } from "sonner";
-import { authAPI } from "@/services/api";
-import type { User } from "@/app/App";
+import { Card } from "@/app/components/ui/card";
 import { VeridexLogo } from "@/app/components/VeridexLogo";
+import { authAPI } from "@/services/api";
+import { toast } from "sonner";
+import type { User } from "@/app/App";
+import { useSEO, SEO_CONFIGS } from "@/hooks/useSEO";
 
 interface LoginPageProps {
   onLogin: (user: User) => void;
@@ -18,6 +19,9 @@ export function LoginPage({ onLogin, onSwitchToSignup }: LoginPageProps) {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+
+  // Set SEO for login page
+  useSEO(SEO_CONFIGS.login);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
