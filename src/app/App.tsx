@@ -1,6 +1,5 @@
 import { useState, useEffect, Component, ErrorInfo, ReactNode } from "react";
 import { LoginPage } from "@/app/components/LoginPage";
-import { DebugAuthPage } from "@/app/components/DebugAuthPage";
 import { OwnerLayout } from "@/app/components/OwnerLayout";
 import { RepLayout } from "@/app/components/RepLayout";
 import { Toaster } from "@/app/components/ui/sonner";
@@ -65,7 +64,6 @@ class ErrorBoundary extends Component<
 function AppContent() {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [showDebug, setShowDebug] = useState(false);
 
   useEffect(() => {
     // Initialize config synchronously
@@ -150,39 +148,24 @@ function AppContent() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-gray-50">
+      <div className="flex items-center justify-center h-screen bg-background">
         <div className="text-center">
-          <div className="w-16 h-16 bg-blue-500 rounded-lg flex items-center justify-center mx-auto mb-4">
-            <span className="text-2xl font-bold text-white">A</span>
+          <div className="relative w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <div className="absolute inset-0 bg-gradient-to-br from-primary to-purple-600 rounded-2xl blur-lg opacity-50 animate-pulse"></div>
+            <div className="relative w-16 h-16 bg-gradient-to-br from-primary to-purple-600 rounded-2xl flex items-center justify-center">
+              <span className="text-2xl font-bold text-white">A</span>
+            </div>
           </div>
-          <p className="text-gray-600">Loading...</p>
+          <p className="text-muted-foreground">Loading...</p>
         </div>
       </div>
-    );
-  }
-
-  // Debug mode
-  if (showDebug) {
-    return (
-      <>
-        <DebugAuthPage />
-        <div className="fixed bottom-4 right-4">
-          <button
-            onClick={() => setShowDebug(false)}
-            className="bg-gray-800 text-white px-4 py-2 rounded-lg shadow-lg hover:bg-gray-700"
-          >
-            ← Back to Login
-          </button>
-        </div>
-        <Toaster />
-      </>
     );
   }
 
   if (!user) {
     return (
       <>
-        <LoginPage onLogin={handleLogin} onShowDebug={() => setShowDebug(true)} />
+        <LoginPage onLogin={handleLogin} />
         <Toaster />
       </>
     );

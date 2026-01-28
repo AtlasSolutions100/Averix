@@ -28,12 +28,12 @@ export function OwnerLayout({ user, onLogout }: OwnerLayoutProps) {
   ];
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-background">
       {/* Sidebar */}
-      <div className="w-52 bg-[#2c3e5c] text-white flex flex-col">
+      <div className="w-52 bg-card border-r border-border text-foreground flex flex-col">
         {/* Logo */}
         <div className="p-6 flex items-center gap-2">
-          <div className="w-8 h-8 bg-blue-500 rounded flex items-center justify-center font-bold text-white">
+          <div className="w-8 h-8 bg-gradient-to-br from-primary to-purple-600 rounded-lg flex items-center justify-center font-bold text-white shadow-lg shadow-primary/20">
             A
           </div>
           <span className="text-xl font-semibold">Averix</span>
@@ -53,7 +53,7 @@ export function OwnerLayout({ user, onLogout }: OwnerLayoutProps) {
                 disabled={isDisabled}
                 className={`
                   w-full flex items-center gap-3 px-4 py-3 rounded-lg mb-1 transition-colors
-                  ${isActive ? "bg-[#3d5070] text-white" : "text-gray-300 hover:bg-[#3d5070] hover:text-white"}
+                  ${isActive ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" : "text-foreground hover:bg-secondary"}
                   ${isDisabled ? "opacity-50 cursor-not-allowed" : ""}
                 `}
               >
@@ -65,22 +65,22 @@ export function OwnerLayout({ user, onLogout }: OwnerLayoutProps) {
         </nav>
 
         {/* User Profile */}
-        <div className="p-4 border-t border-gray-700">
+        <div className="p-4 border-t border-border">
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
-              <span className="text-sm font-semibold">{user.avatar || user.name.slice(0, 2).toUpperCase()}</span>
+            <div className="w-10 h-10 bg-gradient-to-br from-primary to-purple-600 rounded-full flex items-center justify-center shadow-lg shadow-primary/20">
+              <span className="text-sm font-semibold text-white">{user.avatar || user.name.slice(0, 2).toUpperCase()}</span>
             </div>
             <div className="flex-1">
-              <p className="text-sm font-medium">{user.name}</p>
-              <p className="text-xs text-gray-400">{user.role === "owner" ? "Owner" : "Admin"}</p>
+              <p className="text-sm font-medium text-foreground">{user.name}</p>
+              <p className="text-xs text-muted-foreground">{user.role === "owner" ? "Owner" : "Admin"}</p>
             </div>
           </div>
-          <p className="text-xs text-gray-400 mb-3">{user.officeName}</p>
+          <p className="text-xs text-muted-foreground mb-3">{user.officeName}</p>
           <Button
             variant="ghost"
             size="sm"
             onClick={onLogout}
-            className="w-full justify-start text-gray-300 hover:text-white hover:bg-[#3d5070]"
+            className="w-full justify-start text-foreground hover:text-foreground hover:bg-secondary"
           >
             <LogOut className="size-4 mr-2" />
             Sign out
@@ -91,12 +91,12 @@ export function OwnerLayout({ user, onLogout }: OwnerLayoutProps) {
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Top Bar */}
-        <div className="bg-white border-b px-6 py-4 flex items-center justify-between">
+        <div className="bg-card border-b border-border px-6 py-4 flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-semibold text-gray-900">
+            <h1 className="text-2xl font-semibold text-foreground">
               {menuItems.find(m => m.id === currentView)?.label}
             </h1>
-            <p className="text-sm text-gray-600 mt-0.5">
+            <p className="text-sm text-muted-foreground mt-0.5">
               {currentView === "dashboard" && "Office-wide performance clarity"}
               {currentView === "reps" && "Volume vs efficiency — who scales, who doesn't"}
               {currentView === "stores" && "Which retail locations actually convert"}

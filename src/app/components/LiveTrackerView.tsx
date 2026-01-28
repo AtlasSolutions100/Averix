@@ -113,11 +113,11 @@ export function LiveTrackerView({ user }: LiveTrackerViewProps) {
     color?: string;
   }) => {
     const colorClasses = {
-      blue: "bg-blue-50 border-blue-200 text-blue-900",
-      green: "bg-green-50 border-green-200 text-green-900",
-      purple: "bg-purple-50 border-purple-200 text-purple-900",
-      orange: "bg-orange-50 border-orange-200 text-orange-900",
-    }[color] || "bg-blue-50 border-blue-200 text-blue-900";
+      blue: "bg-blue-500/10 border-blue-500/20 text-foreground",
+      green: "bg-green-500/10 border-green-500/20 text-foreground",
+      purple: "bg-purple-500/10 border-purple-500/20 text-foreground",
+      orange: "bg-orange-500/10 border-orange-500/20 text-foreground",
+    }[color] || "bg-blue-500/10 border-blue-500/20 text-foreground";
 
     return (
       <Card className={`p-4 ${colorClasses} border-2`}>
@@ -151,7 +151,7 @@ export function LiveTrackerView({ user }: LiveTrackerViewProps) {
   if (loadingStores) {
     return (
       <div className="flex items-center justify-center h-64">
-        <p className="text-gray-600">Loading...</p>
+        <p className="text-muted-foreground">Loading...</p>
       </div>
     );
   }
@@ -161,18 +161,18 @@ export function LiveTrackerView({ user }: LiveTrackerViewProps) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-semibold text-gray-900">Live Tracker</h2>
-          <p className="text-sm text-gray-600">Track your LOA metrics in real-time</p>
+          <h2 className="text-2xl font-semibold text-foreground">Live Tracker</h2>
+          <p className="text-sm text-muted-foreground">Track your LOA metrics in real-time</p>
         </div>
         <div className="text-right">
-          <p className="text-xs text-gray-500">Today</p>
-          <p className="text-sm font-medium">{new Date().toLocaleDateString()}</p>
+          <p className="text-xs text-muted-foreground">Today</p>
+          <p className="text-sm font-medium text-foreground">{new Date().toLocaleDateString()}</p>
         </div>
       </div>
 
       {/* Store Selection */}
-      <Card className="p-4">
-        <label className="text-sm font-medium mb-2 block">Current Store</label>
+      <Card className="p-4 bg-card border-border">
+        <label className="text-sm font-medium mb-2 block text-foreground">Current Store</label>
         <Select value={selectedStore} onValueChange={setSelectedStore}>
           <SelectTrigger>
             <SelectValue placeholder="Select store" />
@@ -188,18 +188,18 @@ export function LiveTrackerView({ user }: LiveTrackerViewProps) {
       </Card>
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-3 gap-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+      <div className="grid grid-cols-3 gap-4 p-4 bg-blue-500/10 rounded-lg border border-blue-500/20">
         <div>
-          <p className="text-xs text-blue-700">Contact Rate</p>
-          <p className="text-2xl font-bold text-blue-900">{contactRate}%</p>
+          <p className="text-xs text-blue-400">Contact Rate</p>
+          <p className="text-2xl font-bold text-foreground">{contactRate}%</p>
         </div>
         <div>
-          <p className="text-xs text-blue-700">Presentation Rate</p>
-          <p className="text-2xl font-bold text-blue-900">{presentationRate}%</p>
+          <p className="text-xs text-blue-400">Presentation Rate</p>
+          <p className="text-2xl font-bold text-foreground">{presentationRate}%</p>
         </div>
         <div>
-          <p className="text-xs text-blue-700">Close Rate</p>
-          <p className="text-2xl font-bold text-blue-900">{closeRate}%</p>
+          <p className="text-xs text-blue-400">Close Rate</p>
+          <p className="text-2xl font-bold text-foreground">{closeRate}%</p>
         </div>
       </div>
 
@@ -215,11 +215,11 @@ export function LiveTrackerView({ user }: LiveTrackerViewProps) {
       </div>
 
       {/* Actions */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t shadow-lg lg:relative lg:shadow-none lg:border-0">
+      <div className="fixed bottom-0 left-0 right-0 p-4 bg-card border-t border-border shadow-lg lg:relative lg:shadow-none lg:border-0">
         <div className="max-w-4xl mx-auto flex gap-3">
           <Button
             onClick={handleSave}
-            className="flex-1 bg-blue-600 hover:bg-blue-700 h-12"
+            className="flex-1 bg-primary hover:bg-primary/90 h-12 shadow-lg shadow-primary/20"
             disabled={saving}
           >
             <Save className="size-4 mr-2" />
@@ -228,7 +228,7 @@ export function LiveTrackerView({ user }: LiveTrackerViewProps) {
           <Button
             onClick={handleReset}
             variant="outline"
-            className="h-12"
+            className="h-12 bg-secondary/50 hover:bg-secondary border-border"
           >
             <RotateCcw className="size-4" />
           </Button>

@@ -54,7 +54,7 @@ export function OwnerDashboardView({ user }: OwnerDashboardViewProps) {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-96">
-        <Loader2 className="size-8 animate-spin text-blue-600" />
+        <Loader2 className="size-8 animate-spin text-primary" />
       </div>
     );
   }
@@ -62,10 +62,10 @@ export function OwnerDashboardView({ user }: OwnerDashboardViewProps) {
   if (!metrics) {
     return (
       <div className="p-6">
-        <Card className="p-8 text-center">
-          <Target className="size-12 text-gray-400 mx-auto mb-3" />
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">No data available</h3>
-          <p className="text-gray-600">Start tracking data to see office metrics</p>
+        <Card className="p-8 text-center bg-card border-border">
+          <Target className="size-12 text-muted-foreground mx-auto mb-3" />
+          <h3 className="text-lg font-semibold text-foreground mb-2">No data available</h3>
+          <p className="text-muted-foreground">Start tracking data to see office metrics</p>
         </Card>
       </div>
     );
@@ -82,12 +82,12 @@ export function OwnerDashboardView({ user }: OwnerDashboardViewProps) {
 
   const getColorClasses = (color: string) => {
     const colors: Record<string, { bg: string; icon: string }> = {
-      blue: { bg: "bg-blue-100", icon: "text-blue-600" },
-      green: { bg: "bg-green-100", icon: "text-green-600" },
-      orange: { bg: "bg-orange-100", icon: "text-orange-600" },
-      purple: { bg: "bg-purple-100", icon: "text-purple-600" },
-      pink: { bg: "bg-pink-100", icon: "text-pink-600" },
-      indigo: { bg: "bg-indigo-100", icon: "text-indigo-600" },
+      blue: { bg: "bg-blue-500/10", icon: "text-blue-400" },
+      green: { bg: "bg-green-500/10", icon: "text-green-400" },
+      orange: { bg: "bg-orange-500/10", icon: "text-orange-400" },
+      purple: { bg: "bg-purple-500/10", icon: "text-purple-400" },
+      pink: { bg: "bg-pink-500/10", icon: "text-pink-400" },
+      indigo: { bg: "bg-indigo-500/10", icon: "text-indigo-400" },
     };
     return colors[color] || colors.blue;
   };
@@ -95,8 +95,8 @@ export function OwnerDashboardView({ user }: OwnerDashboardViewProps) {
   return (
     <div className="p-6 space-y-6">
       <div>
-        <h2 className="text-2xl font-semibold text-gray-900 mb-1">Office Dashboard</h2>
-        <p className="text-gray-600">Last 30 days performance overview</p>
+        <h2 className="text-2xl font-semibold text-foreground mb-1">Office Dashboard</h2>
+        <p className="text-muted-foreground">Last 30 days performance overview</p>
       </div>
 
       {/* Top Stats - 6 across */}
@@ -106,58 +106,58 @@ export function OwnerDashboardView({ user }: OwnerDashboardViewProps) {
           const colors = getColorClasses(stat.color);
           
           return (
-            <Card key={stat.label} className="p-4">
+            <Card key={stat.label} className="p-4 bg-card border-border">
               <div className="flex items-start justify-between mb-3">
                 <div className={`p-2 rounded-lg ${colors.bg}`}>
                   <Icon className={`size-5 ${colors.icon}`} />
                 </div>
-                <div className={`flex items-center gap-1 text-xs ${stat.trend === "up" ? "text-green-600" : "text-red-600"}`}>
+                <div className={`flex items-center gap-1 text-xs ${stat.trend === "up" ? "text-green-400" : "text-red-400"}`}>
                   {stat.trend === "up" ? <TrendingUp className="size-3" /> : <TrendingDown className="size-3" />}
                   {stat.change}
                 </div>
               </div>
-              <p className="text-xs text-gray-600 mb-1">{stat.label}</p>
-              <p className="text-2xl font-semibold">{stat.value}</p>
+              <p className="text-xs text-muted-foreground mb-1">{stat.label}</p>
+              <p className="text-2xl font-semibold text-foreground">{stat.value}</p>
             </Card>
           );
         })}
       </div>
 
       {/* LOA Funnel */}
-      <Card className="p-6">
-        <h3 className="text-lg font-semibold mb-4">LOA Funnel (Last 30 Days)</h3>
+      <Card className="p-6 bg-card border-border">
+        <h3 className="text-lg font-semibold text-foreground mb-4">LOA Funnel (Last 30 Days)</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="p-4 bg-blue-50 rounded-lg">
-            <p className="text-xs text-blue-700 mb-1">Stops</p>
-            <p className="text-3xl font-bold text-blue-900">{metrics.stops?.toLocaleString() || 'N/A'}</p>
-            <p className="text-xs text-blue-600 mt-1">100%</p>
+          <div className="p-4 bg-blue-500/10 rounded-lg border border-blue-500/20">
+            <p className="text-xs text-blue-400 mb-1">Stops</p>
+            <p className="text-3xl font-bold text-foreground">{metrics.stops?.toLocaleString() || 'N/A'}</p>
+            <p className="text-xs text-blue-400 mt-1">100%</p>
           </div>
-          <div className="p-4 bg-blue-50 rounded-lg">
-            <p className="text-xs text-blue-700 mb-1">Contacts</p>
-            <p className="text-3xl font-bold text-blue-900">{metrics.contacts.toLocaleString()}</p>
-            <p className="text-xs text-blue-600 mt-1">{metrics.contactRate}%</p>
+          <div className="p-4 bg-blue-500/10 rounded-lg border border-blue-500/20">
+            <p className="text-xs text-blue-400 mb-1">Contacts</p>
+            <p className="text-3xl font-bold text-foreground">{metrics.contacts.toLocaleString()}</p>
+            <p className="text-xs text-blue-400 mt-1">{metrics.contactRate}%</p>
           </div>
-          <div className="p-4 bg-green-50 rounded-lg">
-            <p className="text-xs text-green-700 mb-1">Presentations</p>
-            <p className="text-3xl font-bold text-green-900">{metrics.presentations.toLocaleString()}</p>
-            <p className="text-xs text-green-600 mt-1">{metrics.presentationRate}%</p>
+          <div className="p-4 bg-green-500/10 rounded-lg border border-green-500/20">
+            <p className="text-xs text-green-400 mb-1">Presentations</p>
+            <p className="text-3xl font-bold text-foreground">{metrics.presentations.toLocaleString()}</p>
+            <p className="text-xs text-green-400 mt-1">{metrics.presentationRate}%</p>
           </div>
-          <div className="p-4 bg-orange-50 rounded-lg">
-            <p className="text-xs text-orange-700 mb-1">Sales</p>
-            <p className="text-3xl font-bold text-orange-900">{metrics.sales.toLocaleString()}</p>
-            <p className="text-xs text-orange-600 mt-1">{metrics.closeRate}%</p>
+          <div className="p-4 bg-orange-500/10 rounded-lg border border-orange-500/20">
+            <p className="text-xs text-orange-400 mb-1">Sales</p>
+            <p className="text-3xl font-bold text-foreground">{metrics.sales.toLocaleString()}</p>
+            <p className="text-xs text-orange-400 mt-1">{metrics.closeRate}%</p>
           </div>
         </div>
       </Card>
 
       {/* Rep Leaderboard */}
       {leaderboard.length > 0 && (
-        <Card className="p-6">
-          <h3 className="text-lg font-semibold mb-4">Rep Performance Leaderboard</h3>
+        <Card className="p-6 bg-card border-border">
+          <h3 className="text-lg font-semibold text-foreground mb-4">Rep Performance Leaderboard</h3>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b text-xs text-gray-600">
+                <tr className="border-b border-border text-xs text-muted-foreground">
                   <th className="text-left py-3 px-2">Rank</th>
                   <th className="text-left py-3 px-2">Rep</th>
                   <th className="text-right py-3 px-2">Contacts</th>
@@ -172,36 +172,36 @@ export function OwnerDashboardView({ user }: OwnerDashboardViewProps) {
                 {leaderboard.map((rep, idx) => {
                   const initials = rep.name.split(' ').map((n: string) => n[0]).join('');
                   return (
-                    <tr key={rep.userId} className="border-b hover:bg-gray-50">
+                    <tr key={rep.userId} className="border-b border-border hover:bg-secondary/50">
                       <td className="py-3 px-2">
                         <div className={`w-8 h-8 rounded-full flex items-center justify-center font-semibold text-sm ${
-                          idx === 0 ? "bg-yellow-100 text-yellow-700" :
-                          idx === 1 ? "bg-gray-200 text-gray-700" :
-                          idx === 2 ? "bg-orange-100 text-orange-700" :
-                          "bg-gray-100 text-gray-600"
+                          idx === 0 ? "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30" :
+                          idx === 1 ? "bg-gray-500/20 text-gray-400 border border-gray-500/30" :
+                          idx === 2 ? "bg-orange-500/20 text-orange-400 border border-orange-500/30" :
+                          "bg-muted text-muted-foreground"
                         }`}>
                           {idx + 1}
                         </div>
                       </td>
                       <td className="py-3 px-2">
                         <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs font-semibold">
+                          <div className="w-9 h-9 bg-gradient-to-br from-primary to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-semibold shadow-lg shadow-primary/20">
                             {initials}
                           </div>
-                          <span className="font-medium">{rep.name}</span>
+                          <span className="font-medium text-foreground">{rep.name}</span>
                         </div>
                       </td>
-                      <td className="text-right py-3 px-2 font-medium">{rep.contacts}</td>
-                      <td className="text-right py-3 px-2">{rep.presentations}</td>
-                      <td className="text-right py-3 px-2 font-semibold text-blue-600">{rep.sales}</td>
-                      <td className="text-right py-3 px-2 font-semibold">${rep.revenue.toLocaleString()}</td>
+                      <td className="text-right py-3 px-2 font-medium text-foreground">{rep.contacts}</td>
+                      <td className="text-right py-3 px-2 text-muted-foreground">{rep.presentations}</td>
+                      <td className="text-right py-3 px-2 font-semibold text-primary">{rep.sales}</td>
+                      <td className="text-right py-3 px-2 font-semibold text-foreground">${rep.revenue.toLocaleString()}</td>
                       <td className="text-right py-3 px-2">
-                        <span className="inline-flex items-center gap-1 text-green-600">
+                        <span className="inline-flex items-center gap-1 text-green-400">
                           <TrendingUp className="size-3" />
                           {rep.closeRate}%
                         </span>
                       </td>
-                      <td className="text-right py-3 px-2 font-medium">${rep.revenuePerContact}</td>
+                      <td className="text-right py-3 px-2 font-medium text-foreground">${rep.revenuePerContact}</td>
                     </tr>
                   );
                 })}
@@ -212,10 +212,10 @@ export function OwnerDashboardView({ user }: OwnerDashboardViewProps) {
       )}
 
       {leaderboard.length === 0 && (
-        <Card className="p-8 text-center">
-          <Users className="size-12 text-gray-400 mx-auto mb-3" />
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">No rep data yet</h3>
-          <p className="text-gray-600">Reps need to start tracking their LOAs to appear on the leaderboard</p>
+        <Card className="p-8 text-center bg-card border-border">
+          <Users className="size-12 text-muted-foreground mx-auto mb-3" />
+          <h3 className="text-lg font-semibold text-foreground mb-2">No rep data yet</h3>
+          <p className="text-muted-foreground">Reps need to start tracking their LOAs to appear on the leaderboard</p>
         </Card>
       )}
     </div>

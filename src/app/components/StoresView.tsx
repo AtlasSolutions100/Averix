@@ -17,14 +17,14 @@ export function StoresView({ user }: StoresViewProps) {
   return (
     <div className="h-full flex flex-col">
       {/* Tabs */}
-      <div className="bg-white border-b px-6">
+      <div className="bg-card border-b border-border px-6">
         <div className="flex gap-4">
           <button
             onClick={() => setActiveTab("visits")}
             className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
               activeTab === "visits"
-                ? "border-blue-600 text-blue-600"
-                : "border-transparent text-gray-600 hover:text-gray-900"
+                ? "border-primary text-primary"
+                : "border-transparent text-muted-foreground hover:text-foreground"
             }`}
           >
             <div className="flex items-center gap-2">
@@ -36,8 +36,8 @@ export function StoresView({ user }: StoresViewProps) {
             onClick={() => setActiveTab("performance")}
             className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
               activeTab === "performance"
-                ? "border-blue-600 text-blue-600"
-                : "border-transparent text-gray-600 hover:text-gray-900"
+                ? "border-primary text-primary"
+                : "border-transparent text-muted-foreground hover:text-foreground"
             }`}
           >
             <div className="flex items-center gap-2">

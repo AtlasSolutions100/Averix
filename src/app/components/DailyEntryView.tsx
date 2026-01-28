@@ -125,16 +125,16 @@ export function DailyEntryView({ user }: DailyEntryViewProps) {
   return (
     <div className="max-w-2xl mx-auto p-4 pb-24 lg:pb-8">
       <div className="mb-6">
-        <h2 className="text-2xl font-semibold text-gray-900 mb-2">Daily Entry</h2>
-        <p className="text-sm text-gray-600">Log your daily performance metrics</p>
+        <h2 className="text-2xl font-semibold text-foreground mb-2">Daily Entry</h2>
+        <p className="text-sm text-muted-foreground">Log your daily performance metrics</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Store and Date */}
-        <Card className="p-6">
+        <Card className="p-6 bg-card border-border">
           <div className="space-y-4">
             <div>
-              <Label htmlFor="store">Store Location *</Label>
+              <Label htmlFor="store" className="text-foreground">Store Location *</Label>
               <Select value={selectedStore} onValueChange={setSelectedStore}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select a store" />
@@ -154,21 +154,21 @@ export function DailyEntryView({ user }: DailyEntryViewProps) {
             </div>
 
             <div>
-              <Label htmlFor="date">Date</Label>
+              <Label htmlFor="date" className="text-foreground">Date</Label>
               <div className="relative mt-1">
-                <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 size-4 text-gray-400" />
+                <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 size-4 text-muted-foreground" />
                 <Input
                   id="date"
                   type="date"
                   value={date}
                   onChange={(e) => setDate(e.target.value)}
-                  className="pl-10"
+                  className="pl-10 bg-input-background border-border text-foreground"
                 />
               </div>
             </div>
 
             <div>
-              <Label htmlFor="hours">Hours Worked</Label>
+              <Label htmlFor="hours" className="text-foreground">Hours Worked</Label>
               <Input
                 id="hours"
                 type="number"
@@ -176,115 +176,115 @@ export function DailyEntryView({ user }: DailyEntryViewProps) {
                 placeholder="8"
                 value={hoursWorked}
                 onChange={(e) => setHoursWorked(e.target.value)}
-                className="mt-1"
+                className="mt-1 bg-input-background border-border text-foreground placeholder:text-muted-foreground"
               />
             </div>
           </div>
         </Card>
 
         {/* Law of Averages Funnel */}
-        <Card className="p-6">
-          <h3 className="font-semibold text-lg mb-4">Law of Averages</h3>
+        <Card className="p-6 bg-card border-border">
+          <h3 className="font-semibold text-lg mb-4 text-foreground">Law of Averages</h3>
           <div className="space-y-4">
             <div>
-              <Label htmlFor="stops">1. Total Stops</Label>
+              <Label htmlFor="stops" className="text-foreground">1. Total Stops</Label>
               <Input
                 id="stops"
                 type="number"
                 placeholder="0"
                 value={stops}
                 onChange={(e) => setStops(e.target.value)}
-                className="mt-1 text-lg"
+                className="mt-1 text-lg bg-input-background border-border text-foreground"
               />
-              <p className="text-xs text-gray-500 mt-1">How many people did you approach?</p>
+              <p className="text-xs text-muted-foreground mt-1">How many people did you approach?</p>
             </div>
 
             <div>
-              <Label htmlFor="contacts">2. Contacts (Stopped to Talk)</Label>
+              <Label htmlFor="contacts" className="text-foreground">2. Contacts (Stopped to Talk)</Label>
               <Input
                 id="contacts"
                 type="number"
                 placeholder="0"
                 value={contacts}
                 onChange={(e) => setContacts(e.target.value)}
-                className="mt-1 text-lg"
+                className="mt-1 text-lg bg-input-background border-border text-foreground"
               />
-              <p className="text-xs text-gray-500 mt-1">How many stopped and engaged?</p>
+              <p className="text-xs text-muted-foreground mt-1">How many stopped and engaged?</p>
             </div>
 
             <div>
-              <Label htmlFor="presentations">3. Presentations</Label>
+              <Label htmlFor="presentations" className="text-foreground">3. Presentations</Label>
               <Input
                 id="presentations"
                 type="number"
                 placeholder="0"
                 value={presentations}
                 onChange={(e) => setPresentations(e.target.value)}
-                className="mt-1 text-lg"
+                className="mt-1 text-lg bg-input-background border-border text-foreground"
               />
-              <p className="text-xs text-gray-500 mt-1">How many received your full pitch?</p>
+              <p className="text-xs text-muted-foreground mt-1">How many received your full pitch?</p>
             </div>
 
             <div>
-              <Label htmlFor="addressChecks">4. Address Checks</Label>
+              <Label htmlFor="addressChecks" className="text-foreground">4. Address Checks</Label>
               <Input
                 id="addressChecks"
                 type="number"
                 placeholder="0"
                 value={addressChecks}
                 onChange={(e) => setAddressChecks(e.target.value)}
-                className="mt-1 text-lg"
+                className="mt-1 text-lg bg-input-background border-border text-foreground"
               />
-              <p className="text-xs text-gray-500 mt-1">How many provided address verification?</p>
+              <p className="text-xs text-muted-foreground mt-1">How many provided address verification?</p>
             </div>
 
             <div>
-              <Label htmlFor="creditChecks">5. Credit Checks</Label>
+              <Label htmlFor="creditChecks" className="text-foreground">5. Credit Checks</Label>
               <Input
                 id="creditChecks"
                 type="number"
                 placeholder="0"
                 value={creditChecks}
                 onChange={(e) => setCreditChecks(e.target.value)}
-                className="mt-1 text-lg"
+                className="mt-1 text-lg bg-input-background border-border text-foreground"
               />
-              <p className="text-xs text-gray-500 mt-1">How many ran credit?</p>
+              <p className="text-xs text-muted-foreground mt-1">How many ran credit?</p>
             </div>
 
             <div>
-              <Label htmlFor="sales">6. Sales Closed</Label>
+              <Label htmlFor="sales" className="text-foreground">6. Sales Closed</Label>
               <Input
                 id="sales"
                 type="number"
                 placeholder="0"
                 value={sales}
                 onChange={(e) => setSales(e.target.value)}
-                className="mt-1 text-lg font-semibold"
+                className="mt-1 text-lg font-semibold bg-input-background border-border text-foreground"
               />
-              <p className="text-xs text-gray-500 mt-1">How many completed sales?</p>
+              <p className="text-xs text-muted-foreground mt-1">How many completed sales?</p>
             </div>
 
             <div>
-              <Label htmlFor="products">7. Products</Label>
+              <Label htmlFor="products" className="text-foreground">7. Products</Label>
               <Input
                 id="products"
                 type="number"
                 placeholder="0"
                 value={products}
                 onChange={(e) => setProducts(e.target.value)}
-                className="mt-1 text-lg"
+                className="mt-1 text-lg bg-input-background border-border text-foreground"
               />
-              <p className="text-xs text-gray-500 mt-1">Total products sold</p>
+              <p className="text-xs text-muted-foreground mt-1">Total products sold</p>
             </div>
           </div>
         </Card>
 
         {/* Revenue */}
-        <Card className="p-6">
+        <Card className="p-6 bg-card border-border">
           <div>
-            <Label htmlFor="revenue">Total Revenue</Label>
+            <Label htmlFor="revenue" className="text-foreground">Total Revenue</Label>
             <div className="relative mt-1">
-              <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">$</span>
+              <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">$</span>
               <Input
                 id="revenue"
                 type="number"
@@ -292,7 +292,7 @@ export function DailyEntryView({ user }: DailyEntryViewProps) {
                 placeholder="0.00"
                 value={revenue}
                 onChange={(e) => setRevenue(e.target.value)}
-                className="pl-7 text-lg font-semibold"
+                className="pl-7 text-lg font-semibold bg-input-background border-border text-foreground"
               />
             </div>
           </div>
@@ -300,37 +300,37 @@ export function DailyEntryView({ user }: DailyEntryViewProps) {
 
         {/* Auto-Calculated Metrics */}
         {contacts && sales && (
-          <Card className="p-6 bg-blue-50 border-blue-200">
-            <h4 className="font-semibold text-sm text-blue-900 mb-3">Auto-Calculated Metrics</h4>
+          <Card className="p-6 bg-blue-500/10 border-blue-500/20">
+            <h4 className="font-semibold text-sm text-blue-400 mb-3">Auto-Calculated Metrics</h4>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <p className="text-xs text-blue-700">Contact Rate</p>
-                <p className="text-lg font-semibold text-blue-900">{contactRate}%</p>
+                <p className="text-xs text-blue-400">Contact Rate</p>
+                <p className="text-lg font-semibold text-foreground">{contactRate}%</p>
               </div>
               <div>
-                <p className="text-xs text-blue-700">Presentation Rate</p>
-                <p className="text-lg font-semibold text-blue-900">{presentationRate}%</p>
+                <p className="text-xs text-blue-400">Presentation Rate</p>
+                <p className="text-lg font-semibold text-foreground">{presentationRate}%</p>
               </div>
               <div>
-                <p className="text-xs text-blue-700">Address Check Rate</p>
-                <p className="text-lg font-semibold text-blue-900">{addressCheckRate}%</p>
+                <p className="text-xs text-blue-400">Address Check Rate</p>
+                <p className="text-lg font-semibold text-foreground">{addressCheckRate}%</p>
               </div>
               <div>
-                <p className="text-xs text-blue-700">Credit Check Rate</p>
-                <p className="text-lg font-semibold text-blue-900">{creditCheckRate}%</p>
+                <p className="text-xs text-blue-400">Credit Check Rate</p>
+                <p className="text-lg font-semibold text-foreground">{creditCheckRate}%</p>
               </div>
               <div>
-                <p className="text-xs text-blue-700">Close Rate</p>
-                <p className="text-lg font-semibold text-blue-900">{closeRate}%</p>
+                <p className="text-xs text-blue-400">Close Rate</p>
+                <p className="text-lg font-semibold text-foreground">{closeRate}%</p>
               </div>
               <div>
-                <p className="text-xs text-blue-700">Overall Close</p>
-                <p className="text-lg font-semibold text-blue-900">{overallCloseRate}%</p>
+                <p className="text-xs text-blue-400">Overall Close</p>
+                <p className="text-lg font-semibold text-foreground">{overallCloseRate}%</p>
               </div>
               {revenue && (
                 <div className="col-span-2">
-                  <p className="text-xs text-blue-700">Revenue per Contact</p>
-                  <p className="text-lg font-semibold text-blue-900">${revenuePerContact}</p>
+                  <p className="text-xs text-blue-400">Revenue per Contact</p>
+                  <p className="text-lg font-semibold text-foreground">${revenuePerContact}</p>
                 </div>
               )}
             </div>
@@ -340,10 +340,11 @@ export function DailyEntryView({ user }: DailyEntryViewProps) {
         {/* Submit Button */}
         <Button
           type="submit"
-          className="w-full bg-blue-600 hover:bg-blue-700 text-lg py-6 sticky bottom-4 lg:relative shadow-lg"
+          className="w-full bg-primary hover:bg-primary/90 text-lg py-6 sticky bottom-4 lg:relative shadow-lg shadow-primary/20"
+          disabled={submitting}
         >
           <CheckCircle2 className="size-5 mr-2" />
-          Submit Day
+          {submitting ? "Submitting..." : "Submit Day"}
         </Button>
       </form>
     </div>

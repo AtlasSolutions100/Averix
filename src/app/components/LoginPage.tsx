@@ -9,10 +9,9 @@ import type { User } from "@/app/App";
 
 interface LoginPageProps {
   onLogin: (user: User) => void;
-  onShowDebug?: () => void;
 }
 
-export function LoginPage({ onLogin, onShowDebug }: LoginPageProps) {
+export function LoginPage({ onLogin }: LoginPageProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -83,44 +82,31 @@ export function LoginPage({ onLogin, onShowDebug }: LoginPageProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Logo & Branding */}
         <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-blue-600 rounded-lg flex items-center justify-center mx-auto mb-4 shadow-lg">
-            <span className="text-3xl font-bold text-white">A</span>
+          <div className="relative w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <div className="absolute inset-0 bg-gradient-to-br from-primary to-purple-600 rounded-2xl blur-lg opacity-50"></div>
+            <div className="relative w-16 h-16 bg-gradient-to-br from-primary to-purple-600 rounded-2xl flex items-center justify-center">
+              <span className="text-3xl font-bold text-white">A</span>
+            </div>
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Averix</h1>
-          <p className="text-gray-600 font-medium">Turn Hustle Into Math</p>
-          <p className="text-sm text-gray-500 mt-1">Scale What Actually Works</p>
+          <h1 className="text-4xl font-bold text-foreground mb-2">Averix</h1>
+          <p className="text-lg text-muted-foreground font-medium">Turn Hustle Into Math</p>
+          <p className="text-sm text-muted-foreground mt-1">Scale What Actually Works</p>
         </div>
 
         {/* Login Card */}
-        <Card className="p-8 shadow-xl">
-          {/* Setup Warning Banner */}
-          <div className="mb-6 p-4 bg-amber-50 border-2 border-amber-200 rounded-lg">
-            <div className="flex items-start gap-3">
-              <div className="text-2xl">⚠️</div>
-              <div>
-                <h3 className="font-semibold text-amber-900 text-sm mb-1">First Time Setup Required</h3>
-                <p className="text-xs text-amber-800 mb-2">
-                  Demo users need to be created before login will work.
-                </p>
-                <p className="text-xs text-amber-700 font-mono">
-                  See <strong>START_HERE.md</strong> for 5-minute setup
-                </p>
-              </div>
-            </div>
-          </div>
-
+        <Card className="p-8 shadow-2xl border-border bg-card/50 backdrop-blur-sm">
           <div className="mb-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-1">Welcome back</h2>
-            <p className="text-sm text-gray-600">Sign in to your dashboard</p>
+            <h2 className="text-xl font-semibold text-foreground mb-1">Welcome back</h2>
+            <p className="text-sm text-muted-foreground">Sign in to your dashboard</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email" className="text-foreground">Email</Label>
               <Input
                 id="email"
                 type="email"
@@ -128,12 +114,12 @@ export function LoginPage({ onLogin, onShowDebug }: LoginPageProps) {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="mt-1"
+                className="mt-1 bg-input-background border-border text-foreground placeholder:text-muted-foreground"
               />
             </div>
 
             <div>
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password" className="text-foreground">Password</Label>
               <Input
                 id="password"
                 type="password"
@@ -141,19 +127,19 @@ export function LoginPage({ onLogin, onShowDebug }: LoginPageProps) {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="mt-1"
+                className="mt-1 bg-input-background border-border text-foreground"
               />
             </div>
 
             {error && (
-              <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded p-3">
+              <div className="text-sm text-destructive-foreground bg-destructive/10 border border-destructive/20 rounded p-3">
                 {error}
               </div>
             )}
 
             <Button
               type="submit"
-              className="w-full bg-blue-600 hover:bg-blue-700"
+              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20"
               disabled={isLoading}
             >
               {isLoading ? "Signing in..." : "Enter Dashboard"}
@@ -161,25 +147,25 @@ export function LoginPage({ onLogin, onShowDebug }: LoginPageProps) {
           </form>
 
           {/* Demo Accounts */}
-          <div className="mt-6 pt-6 border-t">
-            <p className="text-xs text-gray-600 mb-3 text-center">Demo Accounts:</p>
+          <div className="mt-6 pt-6 border-t border-border">
+            <p className="text-xs text-muted-foreground mb-3 text-center">Demo Accounts:</p>
             <div className="space-y-2">
               <Button
                 variant="outline"
                 size="sm"
-                className="w-full justify-start text-xs"
+                className="w-full justify-start text-xs bg-secondary/50 hover:bg-secondary border-border"
                 onClick={() => handleDemoLogin("owner@olympus.com")}
               >
-                <span className="font-semibold mr-2">Owner:</span>
+                <span className="font-semibold mr-2 text-primary">Owner:</span>
                 owner@olympus.com / demo
               </Button>
               <Button
                 variant="outline"
                 size="sm"
-                className="w-full justify-start text-xs"
+                className="w-full justify-start text-xs bg-secondary/50 hover:bg-secondary border-border"
                 onClick={() => handleDemoLogin("jake@olympus.com")}
               >
-                <span className="font-semibold mr-2">Rep:</span>
+                <span className="font-semibold mr-2 text-primary">Rep:</span>
                 jake@olympus.com / demo
               </Button>
             </div>
@@ -187,21 +173,9 @@ export function LoginPage({ onLogin, onShowDebug }: LoginPageProps) {
         </Card>
 
         {/* Footer */}
-        <p className="text-center text-sm text-gray-600 mt-6">
+        <p className="text-center text-sm text-muted-foreground mt-6">
           Built for Cydcor owners and retail sales teams
         </p>
-
-        {/* Debug Button */}
-        {onShowDebug && (
-          <div className="mt-4 text-center">
-            <button
-              onClick={onShowDebug}
-              className="text-xs text-gray-500 hover:text-blue-600 underline"
-            >
-              🔍 Debug Authentication Issues
-            </button>
-          </div>
-        )}
       </div>
     </div>
   );

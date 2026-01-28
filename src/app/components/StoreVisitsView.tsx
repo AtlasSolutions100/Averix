@@ -99,7 +99,7 @@ export function StoreVisitsView({ user }: StoreVisitsViewProps) {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-96">
-        <Loader2 className="size-8 animate-spin text-blue-600" />
+        <Loader2 className="size-8 animate-spin text-primary" />
       </div>
     );
   }
@@ -109,8 +109,8 @@ export function StoreVisitsView({ user }: StoreVisitsViewProps) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-semibold text-gray-900">Store Visit Tracker</h2>
-          <p className="text-gray-600">Visualize rep coverage across all stores</p>
+          <h2 className="text-2xl font-semibold text-foreground">Store Visit Tracker</h2>
+          <p className="text-muted-foreground">Visualize rep coverage across all stores</p>
         </div>
         
         {/* Time Filter */}
@@ -140,9 +140,9 @@ export function StoreVisitsView({ user }: StoreVisitsViewProps) {
       </div>
 
       {/* Legend */}
-      <Card className="p-4">
-        <p className="text-sm font-medium mb-3">Visit Frequency Legend:</p>
-        <div className="flex flex-wrap gap-4 text-xs">
+      <Card className="p-4 bg-card border-border">
+        <p className="text-sm font-medium text-foreground mb-3">Visit Frequency Legend:</p>
+        <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 rounded bg-gray-400"></div>
             <span>1-2 visits</span>
@@ -168,25 +168,25 @@ export function StoreVisitsView({ user }: StoreVisitsViewProps) {
 
       {/* Store Grid */}
       {storeVisits.length === 0 ? (
-        <Card className="p-8 text-center">
-          <MapPin className="size-12 text-gray-400 mx-auto mb-3" />
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">No store visits yet</h3>
-          <p className="text-gray-600">Store visit data will appear once reps start tracking</p>
+        <Card className="p-8 text-center bg-card border-border">
+          <MapPin className="size-12 text-muted-foreground mx-auto mb-3" />
+          <h3 className="text-lg font-semibold text-foreground mb-2">No store visits yet</h3>
+          <p className="text-muted-foreground">Store visit data will appear once reps start tracking</p>
         </Card>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
           {storeVisits.map((store) => (
-            <Card key={store.storeName} className="p-5">
+            <Card key={store.storeName} className="p-5 bg-card border-border">
               {/* Store Header */}
-              <div className="mb-4 pb-3 border-b">
+              <div className="mb-4 pb-3 border-b border-border">
                 <div className="flex items-start justify-between mb-1">
-                  <h3 className="font-semibold text-lg text-gray-900">{store.storeName}</h3>
-                  <Badge variant="secondary">
+                  <h3 className="font-semibold text-lg text-foreground">{store.storeName}</h3>
+                  <Badge variant="secondary" className="bg-primary/20 text-primary border-primary/30">
                     {store.reps.reduce((sum: number, rep: any) => sum + rep.visits, 0)} visits
                   </Badge>
                 </div>
                 {store.storeLocation && (
-                  <p className="text-sm text-gray-600 flex items-center gap-1">
+                  <p className="text-sm text-muted-foreground flex items-center gap-1">
                     <MapPin className="size-3" />
                     {store.storeLocation}
                   </p>
@@ -204,10 +204,10 @@ export function StoreVisitsView({ user }: StoreVisitsViewProps) {
                     
                     {/* Rep Info */}
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm truncate">{rep.repName}</p>
-                      <div className="flex items-center gap-3 text-xs text-gray-600">
-                        <span>{rep.totalSales} sales</span>
-                        <span>${rep.totalRevenue.toLocaleString()}</span>
+                      <p className="font-medium text-sm text-foreground truncate">{rep.repName}</p>
+                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                        <span className="font-semibold text-primary">{rep.totalSales} sales</span>
+                        <span className="font-semibold text-foreground">${rep.totalRevenue.toLocaleString()}</span>
                       </div>
                     </div>
                   </div>
@@ -215,16 +215,16 @@ export function StoreVisitsView({ user }: StoreVisitsViewProps) {
               </div>
 
               {/* Store Summary */}
-              <div className="mt-4 pt-3 border-t grid grid-cols-2 gap-2 text-xs">
+              <div className="mt-4 pt-3 border-t border-border grid grid-cols-2 gap-2 text-xs">
                 <div>
-                  <p className="text-gray-600">Total Sales</p>
-                  <p className="font-semibold text-blue-600">
+                  <p className="text-muted-foreground">Total Sales</p>
+                  <p className="font-semibold text-primary text-base">
                     {store.reps.reduce((sum: number, rep: any) => sum + rep.totalSales, 0)}
                   </p>
                 </div>
                 <div>
-                  <p className="text-gray-600">Total Revenue</p>
-                  <p className="font-semibold text-green-600">
+                  <p className="text-muted-foreground">Total Revenue</p>
+                  <p className="font-semibold text-green-400 text-base">
                     ${store.reps.reduce((sum: number, rep: any) => sum + rep.totalRevenue, 0).toLocaleString()}
                   </p>
                 </div>
@@ -237,25 +237,25 @@ export function StoreVisitsView({ user }: StoreVisitsViewProps) {
       {/* Summary Stats */}
       {storeVisits.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card className="p-4">
-            <p className="text-xs text-gray-600 mb-1">Total Stores</p>
-            <p className="text-2xl font-bold text-gray-900">{storeVisits.length}</p>
+          <Card className="p-4 bg-card border-border">
+            <p className="text-xs text-muted-foreground mb-1">Total Stores</p>
+            <p className="text-2xl font-bold text-foreground">{storeVisits.length}</p>
           </Card>
-          <Card className="p-4">
-            <p className="text-xs text-gray-600 mb-1">Active Reps</p>
-            <p className="text-2xl font-bold text-gray-900">
+          <Card className="p-4 bg-card border-border">
+            <p className="text-xs text-muted-foreground mb-1">Active Reps</p>
+            <p className="text-2xl font-bold text-foreground">
               {new Set(storeVisits.flatMap(s => s.reps.map((r: any) => r.repName))).size}
             </p>
           </Card>
-          <Card className="p-4">
-            <p className="text-xs text-gray-600 mb-1">Total Visits</p>
-            <p className="text-2xl font-bold text-gray-900">
+          <Card className="p-4 bg-card border-border">
+            <p className="text-xs text-muted-foreground mb-1">Total Visits</p>
+            <p className="text-2xl font-bold text-foreground">
               {storeVisits.reduce((sum, s) => sum + s.reps.reduce((rSum: number, r: any) => rSum + r.visits, 0), 0)}
             </p>
           </Card>
-          <Card className="p-4">
-            <p className="text-xs text-gray-600 mb-1">Avg Visits/Store</p>
-            <p className="text-2xl font-bold text-gray-900">
+          <Card className="p-4 bg-card border-border">
+            <p className="text-xs text-muted-foreground mb-1">Avg Visits/Store</p>
+            <p className="text-2xl font-bold text-foreground">
               {(storeVisits.reduce((sum, s) => sum + s.reps.reduce((rSum: number, r: any) => rSum + r.visits, 0), 0) / storeVisits.length).toFixed(1)}
             </p>
           </Card>

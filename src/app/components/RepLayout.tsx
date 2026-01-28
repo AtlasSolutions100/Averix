@@ -28,11 +28,11 @@ export function RepLayout({ user, onLogout }: RepLayoutProps) {
 
   return (
     <TrackerProvider>
-      <div className="flex flex-col h-screen bg-gray-50">
+      <div className="flex flex-col h-screen bg-background">
         {/* Mobile Header */}
-        <div className="bg-[#2c3e5c] text-white px-4 py-4 flex items-center justify-between">
+        <div className="bg-card border-b border-border text-foreground px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-blue-500 rounded flex items-center justify-center font-bold text-white">
+            <div className="w-8 h-8 bg-gradient-to-br from-primary to-purple-600 rounded-lg flex items-center justify-center font-bold text-white shadow-lg shadow-primary/20">
               A
             </div>
             <span className="text-lg font-semibold">Averix</span>
@@ -41,7 +41,7 @@ export function RepLayout({ user, onLogout }: RepLayoutProps) {
             variant="ghost"
             size="icon"
             onClick={() => setMenuOpen(!menuOpen)}
-            className="text-white hover:bg-[#3d5070] lg:hidden"
+            className="text-foreground hover:bg-secondary lg:hidden"
           >
             {menuOpen ? <X className="size-5" /> : <Menu className="size-5" />}
           </Button>
@@ -49,7 +49,7 @@ export function RepLayout({ user, onLogout }: RepLayoutProps) {
 
         {/* Mobile Menu Overlay */}
         {menuOpen && (
-          <div className="lg:hidden bg-white border-b shadow-lg">
+          <div className="lg:hidden bg-card border-b border-border shadow-lg">
             <nav className="p-4 space-y-2">
               {menuItems.map((item) => {
                 const Icon = item.icon;
@@ -64,7 +64,7 @@ export function RepLayout({ user, onLogout }: RepLayoutProps) {
                     }}
                     className={`
                       w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors
-                      ${isActive ? "bg-blue-600 text-white" : "text-gray-700 hover:bg-gray-100"}
+                      ${isActive ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" : "text-foreground hover:bg-secondary"}
                     `}
                   >
                     <Icon className="size-5" />
@@ -74,7 +74,7 @@ export function RepLayout({ user, onLogout }: RepLayoutProps) {
               })}
               <button
                 onClick={onLogout}
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100"
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-foreground hover:bg-secondary"
               >
                 <LogOut className="size-5" />
                 <span className="text-sm font-medium">Sign out</span>
@@ -85,15 +85,15 @@ export function RepLayout({ user, onLogout }: RepLayoutProps) {
 
         <div className="flex flex-1 overflow-hidden">
           {/* Desktop Sidebar */}
-          <div className="hidden lg:flex w-64 bg-white border-r flex-col">
+          <div className="hidden lg:flex w-64 bg-card border-r border-border flex-col">
             <div className="p-6">
               <div className="flex items-center gap-3 mb-6">
-                <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center">
+                <div className="w-12 h-12 bg-gradient-to-br from-primary to-purple-600 rounded-full flex items-center justify-center shadow-lg shadow-primary/20">
                   <span className="text-sm font-semibold text-white">{user.avatar || user.name.slice(0, 2).toUpperCase()}</span>
                 </div>
                 <div>
-                  <p className="font-semibold text-gray-900">{user.name}</p>
-                  <p className="text-xs text-gray-600">Sales Rep</p>
+                  <p className="font-semibold text-foreground">{user.name}</p>
+                  <p className="text-xs text-muted-foreground">Sales Rep</p>
                 </div>
               </div>
             </div>
@@ -109,7 +109,7 @@ export function RepLayout({ user, onLogout }: RepLayoutProps) {
                     onClick={() => setCurrentView(item.id)}
                     className={`
                       w-full flex items-center gap-3 px-4 py-3 rounded-lg mb-1 transition-colors
-                      ${isActive ? "bg-blue-600 text-white" : "text-gray-700 hover:bg-gray-100"}
+                      ${isActive ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" : "text-foreground hover:bg-secondary"}
                     `}
                   >
                     <Icon className="size-5" />
@@ -119,13 +119,13 @@ export function RepLayout({ user, onLogout }: RepLayoutProps) {
               })}
             </nav>
 
-            <div className="p-4 border-t">
-              <p className="text-xs text-gray-600 mb-2">{user.officeName}</p>
+            <div className="p-4 border-t border-border">
+              <p className="text-xs text-muted-foreground mb-2">{user.officeName}</p>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={onLogout}
-                className="w-full justify-start"
+                className="w-full justify-start bg-secondary/50 hover:bg-secondary border-border"
               >
                 <LogOut className="size-4 mr-2" />
                 Sign out
@@ -143,7 +143,7 @@ export function RepLayout({ user, onLogout }: RepLayoutProps) {
         </div>
 
         {/* Mobile Bottom Navigation */}
-        <div className="lg:hidden bg-white border-t px-4 py-2 flex items-center justify-around">
+        <div className="lg:hidden bg-card border-t border-border px-4 py-2 flex items-center justify-around">
           {menuItems.map((item) => {
             const Icon = item.icon;
             const isActive = currentView === item.id;
@@ -153,7 +153,7 @@ export function RepLayout({ user, onLogout }: RepLayoutProps) {
                 key={item.id}
                 onClick={() => setCurrentView(item.id)}
                 className={`flex flex-col items-center py-2 px-4 rounded ${
-                  isActive ? "text-blue-600" : "text-gray-600"
+                  isActive ? "text-primary" : "text-muted-foreground"
                 }`}
               >
                 <Icon className="size-5 mb-1" />

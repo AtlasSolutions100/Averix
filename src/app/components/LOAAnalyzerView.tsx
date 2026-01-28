@@ -106,15 +106,15 @@ export function LOAAnalyzerView({ user }: LOAAnalyzerViewProps) {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-96">
-        <Loader2 className="size-8 animate-spin text-blue-600" />
+        <Loader2 className="size-8 animate-spin text-primary" />
       </div>
     );
   }
 
-  // Calculate actual LOA metrics
-  const actualContactsPerSale = metrics?.sales > 0 ? (metrics.contacts / metrics.sales).toFixed(1) : '0';
-  const actualPresPerSale = metrics?.sales > 0 ? (metrics.presentations / metrics.sales).toFixed(1) : '0';
-  const actualStopsPerContact = metrics?.contacts > 0 ? (metrics.stops / metrics.contacts).toFixed(1) : '0';
+  // Calculate actual rates
+  const actualContactsPerSale = metrics?.contacts && metrics?.sales ? (metrics.contacts / metrics.sales).toFixed(1) : '0';
+  const actualPresPerSale = metrics?.presentations && metrics?.sales ? (metrics.presentations / metrics.sales).toFixed(1) : '0';
+  const actualStopsPerContact = metrics?.stops && metrics?.contacts ? (metrics.stops / metrics.contacts).toFixed(1) : '0';
 
   // Calculate gaps
   const contactsGap = parseFloat(actualContactsPerSale) - goals.contactsPerSale;
@@ -122,36 +122,36 @@ export function LOAAnalyzerView({ user }: LOAAnalyzerViewProps) {
   const stopsGap = parseFloat(actualStopsPerContact) - goals.stopsPerContact;
 
   return (
-    <div className="h-full flex flex-col bg-gray-50">
+    <div className="h-full flex flex-col bg-background">
       <div className="flex-1 overflow-auto p-6 space-y-6">
         <div>
-          <h2 className="text-2xl font-semibold text-gray-900">LOA Analyzer</h2>
-          <p className="text-gray-600">Set goals and analyze Law of Averages metrics</p>
+          <h2 className="text-2xl font-semibold text-foreground">LOA Analyzer</h2>
+          <p className="text-muted-foreground">Set goals and analyze Law of Averages metrics</p>
         </div>
 
         {/* Current Performance vs Goals */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* LOA Metrics Card */}
-          <Card className="p-6">
+          <Card className="p-6 bg-card border-border">
             <div className="flex items-center gap-2 mb-6">
-              <Target className="size-5 text-blue-600" />
-              <h3 className="text-lg font-semibold">LOA Performance (Last 30 Days)</h3>
+              <Target className="size-5 text-primary" />
+              <h3 className="text-lg font-semibold text-foreground">LOA Performance (Last 30 Days)</h3>
             </div>
             
             <div className="space-y-6">
               {/* Contacts per Sale */}
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium">Contacts / Sale</span>
+                  <span className="text-sm font-medium text-foreground">Contacts / Sale</span>
                   <div className="flex items-center gap-3">
-                    <span className="text-xs text-gray-600">Goal: {goals.contactsPerSale}</span>
-                    <span className="text-xs text-gray-600">Actual: {actualContactsPerSale}</span>
-                    <Badge variant={contactsGap <= 0 ? "default" : "destructive"}>
+                    <span className="text-xs text-muted-foreground">Goal: {goals.contactsPerSale}</span>
+                    <span className="text-xs text-muted-foreground">Actual: {actualContactsPerSale}</span>
+                    <Badge variant={contactsGap <= 0 ? "default" : "destructive"} className={contactsGap <= 0 ? "bg-green-500/20 text-green-400 border-green-500/30" : ""}>
                       {contactsGap > 0 ? '+' : ''}{contactsGap.toFixed(1)}
                     </Badge>
                   </div>
                 </div>
-                <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                <div className="h-2 bg-secondary rounded-full overflow-hidden">
                   <div 
                     className={`h-full ${contactsGap <= 0 ? 'bg-green-500' : 'bg-red-500'}`}
                     style={{ width: `${Math.min(100, (goals.contactsPerSale / parseFloat(actualContactsPerSale)) * 100)}%` }}
@@ -162,16 +162,16 @@ export function LOAAnalyzerView({ user }: LOAAnalyzerViewProps) {
               {/* Presentations per Sale */}
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium">Presentations / Sale</span>
+                  <span className="text-sm font-medium text-foreground">Presentations / Sale</span>
                   <div className="flex items-center gap-3">
-                    <span className="text-xs text-gray-600">Goal: {goals.presentationsPerSale}</span>
-                    <span className="text-xs text-gray-600">Actual: {actualPresPerSale}</span>
-                    <Badge variant={presGap <= 0 ? "default" : "destructive"}>
+                    <span className="text-xs text-muted-foreground">Goal: {goals.presentationsPerSale}</span>
+                    <span className="text-xs text-muted-foreground">Actual: {actualPresPerSale}</span>
+                    <Badge variant={presGap <= 0 ? "default" : "destructive"} className={presGap <= 0 ? "bg-green-500/20 text-green-400 border-green-500/30" : ""}>
                       {presGap > 0 ? '+' : ''}{presGap.toFixed(1)}
                     </Badge>
                   </div>
                 </div>
-                <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                <div className="h-2 bg-secondary rounded-full overflow-hidden">
                   <div 
                     className={`h-full ${presGap <= 0 ? 'bg-green-500' : 'bg-red-500'}`}
                     style={{ width: `${Math.min(100, (goals.presentationsPerSale / parseFloat(actualPresPerSale)) * 100)}%` }}
@@ -182,16 +182,16 @@ export function LOAAnalyzerView({ user }: LOAAnalyzerViewProps) {
               {/* Stops per Contact */}
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium">Stops / Contact</span>
+                  <span className="text-sm font-medium text-foreground">Stops / Contact</span>
                   <div className="flex items-center gap-3">
-                    <span className="text-xs text-gray-600">Goal: {goals.stopsPerContact}</span>
-                    <span className="text-xs text-gray-600">Actual: {actualStopsPerContact}</span>
-                    <Badge variant={stopsGap <= 0 ? "default" : "destructive"}>
+                    <span className="text-xs text-muted-foreground">Goal: {goals.stopsPerContact}</span>
+                    <span className="text-xs text-muted-foreground">Actual: {actualStopsPerContact}</span>
+                    <Badge variant={stopsGap <= 0 ? "default" : "destructive"} className={stopsGap <= 0 ? "bg-green-500/20 text-green-400 border-green-500/30" : ""}>
                       {stopsGap > 0 ? '+' : ''}{stopsGap.toFixed(1)}
                     </Badge>
                   </div>
                 </div>
-                <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                <div className="h-2 bg-secondary rounded-full overflow-hidden">
                   <div 
                     className={`h-full ${stopsGap <= 0 ? 'bg-green-500' : 'bg-red-500'}`}
                     style={{ width: `${Math.min(100, (goals.stopsPerContact / parseFloat(actualStopsPerContact)) * 100)}%` }}
@@ -201,35 +201,35 @@ export function LOAAnalyzerView({ user }: LOAAnalyzerViewProps) {
             </div>
 
             {/* Summary Stats */}
-            <div className="mt-6 pt-6 border-t grid grid-cols-3 gap-4">
+            <div className="mt-6 pt-6 border-t border-border grid grid-cols-3 gap-4">
               <div>
-                <p className="text-xs text-gray-600">Total Contacts</p>
-                <p className="text-xl font-bold text-gray-900">{metrics?.contacts || 0}</p>
+                <p className="text-xs text-muted-foreground">Total Contacts</p>
+                <p className="text-xl font-bold text-foreground">{metrics?.contacts || 0}</p>
               </div>
               <div>
-                <p className="text-xs text-gray-600">Total Sales</p>
-                <p className="text-xl font-bold text-blue-600">{metrics?.sales || 0}</p>
+                <p className="text-xs text-muted-foreground">Total Sales</p>
+                <p className="text-xl font-bold text-primary">{metrics?.sales || 0}</p>
               </div>
               <div>
-                <p className="text-xs text-gray-600">Close Rate</p>
-                <p className="text-xl font-bold text-green-600">{metrics?.closeRate || 0}%</p>
+                <p className="text-xs text-muted-foreground">Close Rate</p>
+                <p className="text-xl font-bold text-green-400">{metrics?.closeRate || 0}%</p>
               </div>
             </div>
           </Card>
 
           {/* Goal Setting Card */}
-          <Card className="p-6">
+          <Card className="p-6 bg-card border-border">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-2">
-                <TrendingUp className="size-5 text-green-600" />
-                <h3 className="text-lg font-semibold">Set Office Goals</h3>
+                <TrendingUp className="size-5 text-green-400" />
+                <h3 className="text-lg font-semibold text-foreground">Set Office Goals</h3>
               </div>
               {user.role === 'owner' || user.role === 'cydcor' ? (
                 <Button 
                   onClick={handleSaveGoals} 
                   disabled={saving || saved}
                   size="sm"
-                  className="gap-2"
+                  className="gap-2 bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20"
                 >
                   {saving ? (
                     <Loader2 className="size-4 animate-spin" />
@@ -241,7 +241,7 @@ export function LOAAnalyzerView({ user }: LOAAnalyzerViewProps) {
                   {saved ? 'Saved!' : 'Save Goals'}
                 </Button>
               ) : (
-                <Badge variant="secondary">View Only</Badge>
+                <Badge variant="secondary" className="bg-secondary text-foreground">View Only</Badge>
               )}
             </div>
 
@@ -367,25 +367,25 @@ export function LOAAnalyzerView({ user }: LOAAnalyzerViewProps) {
               </div>
             ) : (
               <div className="space-y-4">
-                <div className="p-4 bg-blue-50 rounded-lg">
-                  <h4 className="text-sm font-semibold mb-2">Daily Targets</h4>
+                <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+                  <h4 className="text-sm font-semibold mb-2 text-blue-400">Daily Targets</h4>
                   <div className="grid grid-cols-2 gap-2 text-sm">
-                    <div>Contacts: <span className="font-bold">{goals.dailyContacts}</span></div>
-                    <div>Sales: <span className="font-bold">{goals.dailySales}</span></div>
+                    <div className="text-muted-foreground">Contacts: <span className="font-bold text-foreground">{goals.dailyContacts}</span></div>
+                    <div className="text-muted-foreground">Sales: <span className="font-bold text-foreground">{goals.dailySales}</span></div>
                   </div>
                 </div>
-                <div className="p-4 bg-green-50 rounded-lg">
-                  <h4 className="text-sm font-semibold mb-2">Weekly Targets</h4>
+                <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
+                  <h4 className="text-sm font-semibold mb-2 text-green-400">Weekly Targets</h4>
                   <div className="grid grid-cols-2 gap-2 text-sm">
-                    <div>Contacts: <span className="font-bold">{goals.weeklyContacts}</span></div>
-                    <div>Sales: <span className="font-bold">{goals.weeklySales}</span></div>
+                    <div className="text-muted-foreground">Contacts: <span className="font-bold text-foreground">{goals.weeklyContacts}</span></div>
+                    <div className="text-muted-foreground">Sales: <span className="font-bold text-foreground">{goals.weeklySales}</span></div>
                   </div>
                 </div>
-                <div className="p-4 bg-purple-50 rounded-lg">
-                  <h4 className="text-sm font-semibold mb-2">Monthly Targets</h4>
+                <div className="p-4 bg-purple-500/10 border border-purple-500/20 rounded-lg">
+                  <h4 className="text-sm font-semibold mb-2 text-purple-400">Monthly Targets</h4>
                   <div className="grid grid-cols-2 gap-2 text-sm">
-                    <div>Contacts: <span className="font-bold">{goals.monthlyContacts}</span></div>
-                    <div>Sales: <span className="font-bold">{goals.monthlySales}</span></div>
+                    <div className="text-muted-foreground">Contacts: <span className="font-bold text-foreground">{goals.monthlyContacts}</span></div>
+                    <div className="text-muted-foreground">Sales: <span className="font-bold text-foreground">{goals.monthlySales}</span></div>
                   </div>
                 </div>
               </div>

@@ -92,7 +92,7 @@ export function RepDashboardView({ user }: RepDashboardViewProps) {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-96">
-        <Loader2 className="size-8 animate-spin text-blue-600" />
+        <Loader2 className="size-8 animate-spin text-primary" />
       </div>
     );
   }
@@ -100,63 +100,63 @@ export function RepDashboardView({ user }: RepDashboardViewProps) {
   return (
     <div className="p-6 space-y-6">
       <div>
-        <h2 className="text-2xl font-semibold text-gray-900 mb-1">Welcome back, {user.name.split(' ')[0]}!</h2>
-        <p className="text-gray-600">Here's your performance overview (Last 30 days)</p>
+        <h2 className="text-2xl font-semibold text-foreground mb-1">Welcome back, {user.name.split(' ')[0]}!</h2>
+        <p className="text-muted-foreground">Here's your performance overview (Last 30 days)</p>
       </div>
 
       {/* Quick Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="p-4">
+        <Card className="p-4 bg-card border-border">
           <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <Target className="size-5 text-blue-600" />
+            <div className="p-2 bg-blue-500/10 rounded-lg">
+              <Target className="size-5 text-blue-400" />
             </div>
           </div>
-          <p className="text-xs text-gray-600 mb-1">Contacts</p>
-          <p className="text-2xl font-semibold">{stats.contacts}</p>
+          <p className="text-xs text-muted-foreground mb-1">Contacts</p>
+          <p className="text-2xl font-semibold text-foreground">{stats.contacts}</p>
         </Card>
 
-        <Card className="p-4">
+        <Card className="p-4 bg-card border-border">
           <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 bg-green-100 rounded-lg">
-              <Calendar className="size-5 text-green-600" />
+            <div className="p-2 bg-green-500/10 rounded-lg">
+              <Calendar className="size-5 text-green-400" />
             </div>
           </div>
-          <p className="text-xs text-gray-600 mb-1">Sales</p>
-          <p className="text-2xl font-semibold">{stats.sales}</p>
+          <p className="text-xs text-muted-foreground mb-1">Sales</p>
+          <p className="text-2xl font-semibold text-foreground">{stats.sales}</p>
         </Card>
 
-        <Card className="p-4">
+        <Card className="p-4 bg-card border-border">
           <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 bg-purple-100 rounded-lg">
-              <DollarSign className="size-5 text-purple-600" />
+            <div className="p-2 bg-purple-500/10 rounded-lg">
+              <DollarSign className="size-5 text-purple-400" />
             </div>
           </div>
-          <p className="text-xs text-gray-600 mb-1">Revenue</p>
-          <p className="text-2xl font-semibold">${stats.revenue.toLocaleString()}</p>
+          <p className="text-xs text-muted-foreground mb-1">Revenue</p>
+          <p className="text-2xl font-semibold text-foreground">${stats.revenue.toLocaleString()}</p>
         </Card>
 
-        <Card className="p-4">
+        <Card className="p-4 bg-card border-border">
           <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 bg-orange-100 rounded-lg">
-              <TrendingUp className="size-5 text-orange-600" />
+            <div className="p-2 bg-orange-500/10 rounded-lg">
+              <TrendingUp className="size-5 text-orange-400" />
             </div>
           </div>
-          <p className="text-xs text-gray-600 mb-1">Close Rate</p>
-          <p className="text-2xl font-semibold">{stats.closeRate}%</p>
+          <p className="text-xs text-muted-foreground mb-1">Close Rate</p>
+          <p className="text-2xl font-semibold text-foreground">{stats.closeRate}%</p>
         </Card>
       </div>
 
       {/* Weekly Performance */}
       {weeklyData.length > 0 && (
-        <Card className="p-6">
-          <h3 className="text-lg font-semibold mb-4">Recent Performance</h3>
+        <Card className="p-6 bg-card border-border">
+          <h3 className="text-lg font-semibold text-foreground mb-4">Recent Performance</h3>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={weeklyData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="day" />
-              <YAxis />
-              <Tooltip />
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(99, 102, 241, 0.1)" />
+              <XAxis dataKey="day" stroke="#9ca3af" />
+              <YAxis stroke="#9ca3af" />
+              <Tooltip contentStyle={{ backgroundColor: '#13141f', border: '1px solid #2a2b3a', borderRadius: '8px' }} />
               <Bar dataKey="contacts" fill="#3b82f6" name="Contacts" />
               <Bar dataKey="pres" fill="#10b981" name="Presentations" />
               <Bar dataKey="sales" fill="#f59e0b" name="Sales" />
@@ -167,116 +167,116 @@ export function RepDashboardView({ user }: RepDashboardViewProps) {
 
       {/* Performance Insights */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="p-6">
-          <h3 className="text-lg font-semibold mb-4">Your LOA Breakdown</h3>
+        <Card className="p-6 bg-card border-border">
+          <h3 className="text-lg font-semibold text-foreground mb-4">Your LOA Breakdown</h3>
           <div className="space-y-3">
             <div>
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm text-gray-600">Contacts per Sale</span>
-                <span className="text-sm font-semibold">
+                <span className="text-sm text-muted-foreground">Contacts per Sale</span>
+                <span className="text-sm font-semibold text-foreground">
                   {stats.sales > 0 ? (stats.contacts / stats.sales).toFixed(1) : 'N/A'}
-                  {goals && <span className="text-xs text-gray-500 ml-1">(Goal: {goals.contactsPerSale})</span>}
+                  {goals && <span className="text-xs text-muted-foreground ml-1">(Goal: {goals.contactsPerSale})</span>}
                 </span>
               </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div className="bg-blue-600 h-2 rounded-full" style={{ width: '70%' }}></div>
+              <div className="w-full bg-secondary rounded-full h-2">
+                <div className="bg-blue-500 h-2 rounded-full" style={{ width: '70%' }}></div>
               </div>
             </div>
 
             <div>
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm text-gray-600">Presentation to Sale</span>
-                <span className="text-sm font-semibold">
+                <span className="text-sm text-muted-foreground">Presentation to Sale</span>
+                <span className="text-sm font-semibold text-foreground">
                   {stats.sales > 0 ? (stats.presentations / stats.sales).toFixed(1) : 'N/A'}
-                  {goals && <span className="text-xs text-gray-500 ml-1">(Goal: {goals.presentationsPerSale})</span>}
+                  {goals && <span className="text-xs text-muted-foreground ml-1">(Goal: {goals.presentationsPerSale})</span>}
                 </span>
               </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div className="bg-green-600 h-2 rounded-full" style={{ width: '80%' }}></div>
+              <div className="w-full bg-secondary rounded-full h-2">
+                <div className="bg-green-500 h-2 rounded-full" style={{ width: '80%' }}></div>
               </div>
             </div>
 
             <div>
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm text-gray-600">Revenue per Contact</span>
-                <span className="text-sm font-semibold">${stats.revPerContact}</span>
+                <span className="text-sm text-muted-foreground">Revenue per Contact</span>
+                <span className="text-sm font-semibold text-foreground">${stats.revPerContact}</span>
               </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div className="bg-purple-600 h-2 rounded-full" style={{ width: '75%' }}></div>
+              <div className="w-full bg-secondary rounded-full h-2">
+                <div className="bg-purple-500 h-2 rounded-full" style={{ width: '75%' }}></div>
               </div>
             </div>
           </div>
         </Card>
 
         {goals ? (
-          <Card className="p-6">
-            <h3 className="text-lg font-semibold mb-4">Office Goals</h3>
+          <Card className="p-6 bg-card border-border">
+            <h3 className="text-lg font-semibold text-foreground mb-4">Office Goals</h3>
             <div className="space-y-4">
-              <div className="p-4 bg-blue-50 border border-blue-200 rounded">
-                <h4 className="text-xs font-semibold text-blue-900 mb-2">Daily Targets</h4>
+              <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+                <h4 className="text-xs font-semibold text-blue-400 mb-2">Daily Targets</h4>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <p className="text-xs text-blue-700">Contacts</p>
-                    <p className="text-xl font-bold text-blue-900">{goals.dailyContacts}</p>
+                    <p className="text-xs text-blue-400">Contacts</p>
+                    <p className="text-xl font-bold text-foreground">{goals.dailyContacts}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-blue-700">Sales</p>
-                    <p className="text-xl font-bold text-blue-900">{goals.dailySales}</p>
+                    <p className="text-xs text-blue-400">Sales</p>
+                    <p className="text-xl font-bold text-foreground">{goals.dailySales}</p>
                   </div>
                 </div>
               </div>
 
-              <div className="p-4 bg-green-50 border border-green-200 rounded">
-                <h4 className="text-xs font-semibold text-green-900 mb-2">Weekly Targets</h4>
+              <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
+                <h4 className="text-xs font-semibold text-green-400 mb-2">Weekly Targets</h4>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <p className="text-xs text-green-700">Contacts</p>
-                    <p className="text-xl font-bold text-green-900">{goals.weeklyContacts}</p>
+                    <p className="text-xs text-green-400">Contacts</p>
+                    <p className="text-xl font-bold text-foreground">{goals.weeklyContacts}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-green-700">Sales</p>
-                    <p className="text-xl font-bold text-green-900">{goals.weeklySales}</p>
+                    <p className="text-xs text-green-400">Sales</p>
+                    <p className="text-xl font-bold text-foreground">{goals.weeklySales}</p>
                   </div>
                 </div>
               </div>
 
-              <div className="p-4 bg-purple-50 border border-purple-200 rounded">
-                <h4 className="text-xs font-semibold text-purple-900 mb-2">Monthly Targets</h4>
+              <div className="p-4 bg-purple-500/10 border border-purple-500/20 rounded-lg">
+                <h4 className="text-xs font-semibold text-purple-400 mb-2">Monthly Targets</h4>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <p className="text-xs text-purple-700">Contacts</p>
-                    <p className="text-xl font-bold text-purple-900">{goals.monthlyContacts}</p>
+                    <p className="text-xs text-purple-400">Contacts</p>
+                    <p className="text-xl font-bold text-foreground">{goals.monthlyContacts}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-purple-700">Sales</p>
-                    <p className="text-xl font-bold text-purple-900">{goals.monthlySales}</p>
+                    <p className="text-xs text-purple-400">Sales</p>
+                    <p className="text-xl font-bold text-foreground">{goals.monthlySales}</p>
                   </div>
                 </div>
               </div>
             </div>
           </Card>
         ) : (
-          <Card className="p-6">
-            <h3 className="text-lg font-semibold mb-4">Performance Summary</h3>
+          <Card className="p-6 bg-card border-border">
+            <h3 className="text-lg font-semibold text-foreground mb-4">Performance Summary</h3>
             <div className="space-y-4">
-              <div className="p-4 bg-blue-50 border border-blue-200 rounded">
+              <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-blue-900">Total Presentations</span>
-                  <span className="text-2xl font-bold text-blue-700">{stats.presentations}</span>
+                  <span className="text-sm font-medium text-blue-400">Total Presentations</span>
+                  <span className="text-2xl font-bold text-foreground">{stats.presentations}</span>
                 </div>
               </div>
 
-              <div className="p-4 bg-green-50 border border-green-200 rounded">
+              <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-green-900">Total Sales</span>
-                  <span className="text-2xl font-bold text-green-700">{stats.sales}</span>
+                  <span className="text-sm font-medium text-green-400">Total Sales</span>
+                  <span className="text-2xl font-bold text-foreground">{stats.sales}</span>
                 </div>
               </div>
 
-              <div className="p-4 bg-purple-50 border border-purple-200 rounded">
+              <div className="p-4 bg-purple-500/10 border border-purple-500/20 rounded-lg">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-purple-900">Avg Revenue/Sale</span>
-                  <span className="text-2xl font-bold text-purple-700">
+                  <span className="text-sm font-medium text-purple-400">Avg Revenue/Sale</span>
+                  <span className="text-2xl font-bold text-foreground">
                     ${stats.sales > 0 ? (stats.revenue / stats.sales).toFixed(0) : '0'}
                   </span>
                 </div>
@@ -287,10 +287,10 @@ export function RepDashboardView({ user }: RepDashboardViewProps) {
       </div>
 
       {stats.contacts === 0 && (
-        <Card className="p-8 text-center">
-          <Target className="size-12 text-gray-400 mx-auto mb-3" />
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">No data yet</h3>
-          <p className="text-gray-600">Start tracking your LOAs to see your performance metrics here!</p>
+        <Card className="p-8 text-center bg-card border-border">
+          <Target className="size-12 text-muted-foreground mx-auto mb-3" />
+          <h3 className="text-lg font-semibold text-foreground mb-2">No data yet</h3>
+          <p className="text-muted-foreground">Start tracking your LOAs to see your performance metrics here!</p>
         </Card>
       )}
     </div>

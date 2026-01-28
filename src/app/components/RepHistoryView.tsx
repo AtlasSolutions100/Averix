@@ -82,7 +82,7 @@ export function RepHistoryView({ user }: RepHistoryViewProps) {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-96">
-        <Loader2 className="size-8 animate-spin text-blue-600" />
+        <Loader2 className="size-8 animate-spin text-primary" />
       </div>
     );
   }
@@ -90,10 +90,10 @@ export function RepHistoryView({ user }: RepHistoryViewProps) {
   if (dailyHistory.length === 0) {
     return (
       <div className="p-6">
-        <Card className="p-8 text-center">
-          <Calendar className="size-12 text-gray-400 mx-auto mb-3" />
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">No history yet</h3>
-          <p className="text-gray-600">Start tracking your daily entries to see your performance history</p>
+        <Card className="p-8 text-center bg-card border-border">
+          <Calendar className="size-12 text-muted-foreground mx-auto mb-3" />
+          <h3 className="text-lg font-semibold text-foreground mb-2">No history yet</h3>
+          <p className="text-muted-foreground">Start tracking your daily entries to see your performance history</p>
         </Card>
       </div>
     );
@@ -102,14 +102,14 @@ export function RepHistoryView({ user }: RepHistoryViewProps) {
   return (
     <div className="p-6 space-y-6">
       <div>
-        <h2 className="text-2xl font-semibold text-gray-900 mb-1">Performance History</h2>
-        <p className="text-gray-600">Track your progress and trends (Last 30 days)</p>
+        <h2 className="text-2xl font-semibold text-foreground mb-1">Performance History</h2>
+        <p className="text-muted-foreground">Track your progress and trends (Last 30 days)</p>
       </div>
 
       {/* Store Performance */}
       {storeBreakdown.length > 0 && (
-        <Card className="p-6">
-          <h3 className="text-lg font-semibold mb-4">Store Performance Summary</h3>
+        <Card className="p-6 bg-card border-border">
+          <h3 className="text-lg font-semibold text-foreground mb-4">Store Performance Summary</h3>
           <Table>
             <TableHeader>
               <TableRow>
@@ -124,13 +124,13 @@ export function RepHistoryView({ user }: RepHistoryViewProps) {
             <TableBody>
               {storeBreakdown.map((store) => (
                 <TableRow key={store.store}>
-                  <TableCell className="font-medium">{store.store}</TableCell>
-                  <TableCell className="text-right">{store.days}</TableCell>
-                  <TableCell className="text-right">{store.contacts}</TableCell>
-                  <TableCell className="text-right font-semibold text-blue-600">{store.sales}</TableCell>
-                  <TableCell className="text-right font-semibold">${store.revenue.toLocaleString()}</TableCell>
+                  <TableCell className="font-medium text-foreground">{store.store}</TableCell>
+                  <TableCell className="text-right text-foreground">{store.days}</TableCell>
+                  <TableCell className="text-right text-foreground">{store.contacts}</TableCell>
+                  <TableCell className="text-right font-semibold text-primary">{store.sales}</TableCell>
+                  <TableCell className="text-right font-semibold text-foreground">${store.revenue.toLocaleString()}</TableCell>
                   <TableCell className="text-right">
-                    <Badge variant="secondary" className="bg-green-100 text-green-700">
+                    <Badge variant="secondary" className="bg-green-500/20 text-green-400 border-green-500/30">
                       {store.avgSales}
                     </Badge>
                   </TableCell>
@@ -142,8 +142,8 @@ export function RepHistoryView({ user }: RepHistoryViewProps) {
       )}
 
       {/* Daily History */}
-      <Card className="p-6">
-        <h3 className="text-lg font-semibold mb-4">Recent Daily Performance</h3>
+      <Card className="p-6 bg-card border-border">
+        <h3 className="text-lg font-semibold text-foreground mb-4">Recent Daily Performance</h3>
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
@@ -168,22 +168,22 @@ export function RepHistoryView({ user }: RepHistoryViewProps) {
                   <TableRow key={`${day.date}-${idx}`}>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        <Calendar className="size-4 text-gray-400" />
-                        <span className="font-medium">{new Date(day.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                        <Calendar className="size-4 text-muted-foreground" />
+                        <span className="font-medium text-foreground">{new Date(day.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
                       </div>
                     </TableCell>
-                    <TableCell className="text-sm">{day.store}</TableCell>
-                    <TableCell className="text-right">{day.stops}</TableCell>
-                    <TableCell className="text-right">{day.contacts}</TableCell>
-                    <TableCell className="text-right">{day.pres}</TableCell>
+                    <TableCell className="text-sm text-foreground">{day.store}</TableCell>
+                    <TableCell className="text-right text-foreground">{day.stops}</TableCell>
+                    <TableCell className="text-right text-foreground">{day.contacts}</TableCell>
+                    <TableCell className="text-right text-foreground">{day.pres}</TableCell>
                     <TableCell className="text-right">
-                      <span className="font-semibold text-blue-600">{day.sales}</span>
-                      <span className="text-xs text-gray-500 ml-1">({closeRate}%)</span>
+                      <span className="font-semibold text-primary">{day.sales}</span>
+                      <span className="text-xs text-muted-foreground ml-1">({closeRate}%)</span>
                     </TableCell>
-                    <TableCell className="text-right font-semibold">${day.revenue.toLocaleString()}</TableCell>
-                    <TableCell className="text-right">{day.hours || '-'}</TableCell>
+                    <TableCell className="text-right font-semibold text-foreground">${day.revenue.toLocaleString()}</TableCell>
+                    <TableCell className="text-right text-foreground">{day.hours || '-'}</TableCell>
                     <TableCell className="text-right">
-                      <Badge variant="secondary" className="bg-green-100 text-green-700">
+                      <Badge variant="secondary" className="bg-green-500/20 text-green-400 border-green-500/30">
                         ${revenuePerHour}
                       </Badge>
                     </TableCell>
@@ -198,38 +198,38 @@ export function RepHistoryView({ user }: RepHistoryViewProps) {
       {/* Insights */}
       {dailyHistory.length > 0 && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <Card className="p-4 bg-blue-50 border-blue-200">
-            <p className="text-sm font-semibold text-blue-900 mb-1">Best Day</p>
-            <p className="text-2xl font-bold text-blue-600">
+          <Card className="p-4 bg-blue-500/10 border-blue-500/20">
+            <p className="text-sm font-semibold text-blue-400 mb-1">Best Day</p>
+            <p className="text-2xl font-bold text-foreground">
               {new Date(dailyHistory.reduce((best, day) => 
                 day.sales > best.sales ? day : best
               ).date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
             </p>
-            <p className="text-xs text-blue-700">
+            <p className="text-xs text-blue-400">
               {dailyHistory.reduce((best, day) => day.sales > best.sales ? day : best).sales} sales
             </p>
           </Card>
 
-          <Card className="p-4 bg-green-50 border-green-200">
-            <p className="text-sm font-semibold text-green-900 mb-1">Top Store</p>
-            <p className="text-2xl font-bold text-green-600">
+          <Card className="p-4 bg-green-500/10 border-green-500/20">
+            <p className="text-sm font-semibold text-green-400 mb-1">Top Store</p>
+            <p className="text-2xl font-bold text-foreground">
               {storeBreakdown.reduce((best, store) => 
                 parseFloat(store.avgSales) > parseFloat(best.avgSales) ? store : best, storeBreakdown[0]
               )?.store}
             </p>
-            <p className="text-xs text-green-700">
+            <p className="text-xs text-green-400">
               {storeBreakdown.reduce((best, store) => 
                 parseFloat(store.avgSales) > parseFloat(best.avgSales) ? store : best, storeBreakdown[0]
               )?.avgSales} avg sales/day
             </p>
           </Card>
 
-          <Card className="p-4 bg-purple-50 border-purple-200">
-            <p className="text-sm font-semibold text-purple-900 mb-1">Total Sales</p>
-            <p className="text-2xl font-bold text-purple-600">
+          <Card className="p-4 bg-purple-500/10 border-purple-500/20">
+            <p className="text-sm font-semibold text-purple-400 mb-1">Total Sales</p>
+            <p className="text-2xl font-bold text-foreground">
               {dailyHistory.reduce((sum, day) => sum + day.sales, 0)}
             </p>
-            <p className="text-xs text-purple-700">Last 30 days</p>
+            <p className="text-xs text-purple-400">Last 30 days</p>
           </Card>
         </div>
       )}

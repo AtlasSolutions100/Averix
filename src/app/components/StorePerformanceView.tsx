@@ -53,7 +53,7 @@ export function StorePerformanceView({ user }: StorePerformanceViewProps) {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-96">
-        <Loader2 className="size-8 animate-spin text-blue-600" />
+        <Loader2 className="size-8 animate-spin text-primary" />
       </div>
     );
   }
@@ -61,10 +61,10 @@ export function StorePerformanceView({ user }: StorePerformanceViewProps) {
   if (storeStats.length === 0) {
     return (
       <div className="p-6">
-        <Card className="p-8 text-center">
-          <Store className="size-12 text-gray-400 mx-auto mb-3" />
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">No store data yet</h3>
-          <p className="text-gray-600">Store performance metrics will appear once data is tracked</p>
+        <Card className="p-8 text-center bg-card border-border">
+          <Store className="size-12 text-muted-foreground mx-auto mb-3" />
+          <h3 className="text-lg font-semibold text-foreground mb-2">No store data yet</h3>
+          <p className="text-muted-foreground">Store performance metrics will appear once data is tracked</p>
         </Card>
       </div>
     );
@@ -77,23 +77,23 @@ export function StorePerformanceView({ user }: StorePerformanceViewProps) {
   return (
     <div className="p-6 space-y-6">
       <div>
-        <h2 className="text-2xl font-semibold text-gray-900">Store Performance</h2>
-        <p className="text-gray-600">Last 30 days performance by store</p>
+        <h2 className="text-2xl font-semibold text-foreground">Store Performance</h2>
+        <p className="text-muted-foreground">Last 30 days performance by store</p>
       </div>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="p-4">
-          <p className="text-xs text-gray-600 mb-1">Total Revenue</p>
-          <p className="text-2xl font-bold text-gray-900">${totalRevenue.toLocaleString()}</p>
+        <Card className="p-4 bg-card border-border">
+          <p className="text-xs text-muted-foreground mb-1">Total Revenue</p>
+          <p className="text-2xl font-bold text-foreground">${totalRevenue.toLocaleString()}</p>
         </Card>
-        <Card className="p-4">
-          <p className="text-xs text-gray-600 mb-1">Total Sales</p>
-          <p className="text-2xl font-bold text-gray-900">{totalSales}</p>
+        <Card className="p-4 bg-card border-border">
+          <p className="text-xs text-muted-foreground mb-1">Total Sales</p>
+          <p className="text-2xl font-bold text-foreground">{totalSales}</p>
         </Card>
-        <Card className="p-4">
-          <p className="text-xs text-gray-600 mb-1">Total Contacts</p>
-          <p className="text-2xl font-bold text-gray-900">{totalContacts}</p>
+        <Card className="p-4 bg-card border-border">
+          <p className="text-xs text-muted-foreground mb-1">Total Contacts</p>
+          <p className="text-2xl font-bold text-foreground">{totalContacts}</p>
         </Card>
       </div>
 
@@ -109,11 +109,11 @@ export function StorePerformanceView({ user }: StorePerformanceViewProps) {
               : '0';
 
             return (
-              <Card key={store.storeId} className="p-5">
+              <Card key={store.storeId} className="p-5 bg-card border-border">
                 <div className="flex items-start justify-between mb-4">
                   <div>
-                    <h3 className="font-semibold text-lg text-gray-900">{store.storeName}</h3>
-                    <p className="text-sm text-gray-600">{store.storeLocation || 'No location'}</p>
+                    <h3 className="font-semibold text-lg text-foreground">{store.storeName}</h3>
+                    <p className="text-sm text-muted-foreground">{store.storeLocation || 'No location'}</p>
                   </div>
                   <div 
                     className="w-3 h-3 rounded-full"
@@ -123,33 +123,33 @@ export function StorePerformanceView({ user }: StorePerformanceViewProps) {
 
                 <div className="space-y-3">
                   <div>
-                    <p className="text-xs text-gray-600 mb-1">Contacts</p>
-                    <p className="text-2xl font-bold">{store.totalContacts || 0}</p>
+                    <p className="text-xs text-muted-foreground mb-1">Contacts</p>
+                    <p className="text-2xl font-bold text-foreground">{store.totalContacts || 0}</p>
                   </div>
 
                   <div>
-                    <p className="text-xs text-gray-600 mb-1">Sales</p>
+                    <p className="text-xs text-muted-foreground mb-1">Sales</p>
                     <div className="flex items-baseline gap-2">
-                      <p className="text-2xl font-bold text-blue-600">{store.totalSales || 0}</p>
-                      <Badge variant="secondary" className="bg-green-100 text-green-700">
+                      <p className="text-2xl font-bold text-primary">{store.totalSales || 0}</p>
+                      <Badge variant="secondary" className="bg-green-500/20 text-green-400 border-green-500/30">
                         {closeRate}% close
                       </Badge>
                     </div>
                   </div>
 
                   <div>
-                    <p className="text-xs text-gray-600 mb-1">Revenue</p>
+                    <p className="text-xs text-muted-foreground mb-1">Revenue</p>
                     <div className="flex items-baseline gap-2">
-                      <p className="text-xl font-bold">${(store.totalRevenue || 0).toLocaleString()}</p>
-                      <span className="text-xs text-gray-600">${revenuePerSale}/sale</span>
+                      <p className="text-xl font-bold text-foreground">${(store.totalRevenue || 0).toLocaleString()}</p>
+                      <span className="text-xs text-muted-foreground">${revenuePerSale}/sale</span>
                     </div>
                   </div>
                 </div>
 
-                <div className="mt-4 pt-3 border-t">
+                <div className="mt-4 pt-3 border-t border-border">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="text-gray-600">Active Reps</span>
-                    <span className="font-semibold">{store.activeReps || 0}</span>
+                    <span className="text-muted-foreground">Active Reps</span>
+                    <span className="font-semibold text-foreground">{store.activeReps || 0}</span>
                   </div>
                 </div>
               </Card>
@@ -158,8 +158,8 @@ export function StorePerformanceView({ user }: StorePerformanceViewProps) {
         </div>
 
         {/* Revenue Distribution Chart */}
-        <Card className="p-6">
-          <h3 className="text-lg font-semibold mb-4">Revenue Distribution</h3>
+        <Card className="p-6 bg-card border-border">
+          <h3 className="text-lg font-semibold text-foreground mb-4">Revenue Distribution</h3>
           
           {chartData.length > 0 && (
             <>
@@ -178,7 +178,10 @@ export function StorePerformanceView({ user }: StorePerformanceViewProps) {
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(value: any) => `$${value.toLocaleString()}`} />
+                  <Tooltip 
+                    formatter={(value: any) => `$${value.toLocaleString()}`}
+                    contentStyle={{ backgroundColor: '#13141f', border: '1px solid #2a2b3a', borderRadius: '8px' }}
+                  />
                 </PieChart>
               </ResponsiveContainer>
 
@@ -190,25 +193,25 @@ export function StorePerformanceView({ user }: StorePerformanceViewProps) {
                         className="w-3 h-3 rounded"
                         style={{ backgroundColor: item.color }}
                       />
-                      <span className="text-gray-700 truncate">{item.name}</span>
+                      <span className="text-foreground truncate">{item.name}</span>
                     </div>
-                    <span className="font-semibold">${item.value.toLocaleString()}</span>
+                    <span className="font-semibold text-foreground">${item.value.toLocaleString()}</span>
                   </div>
                 ))}
               </div>
             </>
           )}
 
-          <div className="mt-6 pt-4 border-t space-y-2">
+          <div className="mt-6 pt-4 border-t border-border space-y-2">
             <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-600">Avg Revenue/Store</span>
-              <span className="font-semibold">
+              <span className="text-muted-foreground">Avg Revenue/Store</span>
+              <span className="font-semibold text-foreground">
                 ${storeStats.length > 0 ? (totalRevenue / storeStats.length).toFixed(0) : '0'}
               </span>
             </div>
             <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-600">Avg Sales/Store</span>
-              <span className="font-semibold">
+              <span className="text-muted-foreground">Avg Sales/Store</span>
+              <span className="font-semibold text-foreground">
                 {storeStats.length > 0 ? (totalSales / storeStats.length).toFixed(1) : '0'}
               </span>
             </div>
