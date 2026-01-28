@@ -608,23 +608,10 @@ app.get("/make-server-45dc47a9/analytics/store-performance/:officeId", requireAu
 app.get("/make-server-45dc47a9/goals/:officeId", requireAuth, async (c) => {
   try {
     const officeId = c.req.param('officeId');
-    const goals = await kvStore.get(`goals:${officeId}`);
+    const goals = await kvStore.get(`goals_array:${officeId}`);
     
     return c.json({ 
-      goals: goals || {
-        dailyContacts: 50,
-        dailySales: 3,
-        dailyRevenue: 360,
-        weeklyContacts: 250,
-        weeklySales: 15,
-        weeklyRevenue: 1800,
-        monthlyContacts: 1000,
-        monthlySales: 60,
-        monthlyRevenue: 7200,
-        contactsPerSale: 7,
-        presentationsPerSale: 3,
-        stopsPerContact: 2,
-      }
+      goals: goals || []
     });
   } catch (error) {
     console.error('Get goals error:', error);
@@ -656,6 +643,78 @@ app.put("/make-server-45dc47a9/goals/:officeId", requireAuth, async (c) => {
     return c.json({ success: true, goals });
   } catch (error) {
     console.error('Update goals error:', error);
+    return c.json({ error: 'Internal server error' }, 500);
+  }
+});
+
+// Create a new goal
+app.post("/make-server-45dc47a9/goals", requireAuth, async (c) => {
+  try {
+    const user = c.get('user');
+    const supabase = getSupabaseClient();
+    const goalData = await c.req.json();
+    
+    // Verify user is owner
+    const { data: profile } = await supabase
+      .from('user_profiles')
+      .select('role, office_id')
+      .eq('id', user.id)
+      .single();
+    
+    if (profile?.role !== 'owner' && profile?.role !== 'cydcor') {
+      return c.json({ error: 'Only owners can create goals' }, 403);
+    }
+    
+    // Get existing goals array
+    const existingGoals = await kvStore.get(`goals_array:${goalData.officeId}`) || [];
+    
+    // Create new goal with ID
+    const newGoal = {
+      id: `goal_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      ...goalData,
+      current: 0,
+      createdAt: new Date().toISOString(),
+    };
+    
+    // Add to array
+    const updatedGoals = [...existingGoals, newGoal];
+    await kvStore.set(`goals_array:${goalData.officeId}`, updatedGoals);
+    
+    return c.json({ success: true, goal: newGoal });
+  } catch (error) {
+    console.error('Create goal error:', error);
+    return c.json({ error: 'Internal server error' }, 500);
+  }
+});
+
+// Delete a goal
+app.delete("/make-server-45dc47a9/goals/:goalId", requireAuth, async (c) => {
+  try {
+    const user = c.get('user');
+    const supabase = getSupabaseClient();
+    const goalId = c.req.param('goalId');
+    
+    // Verify user is owner
+    const { data: profile } = await supabase
+      .from('user_profiles')
+      .select('role, office_id')
+      .eq('id', user.id)
+      .single();
+    
+    if (profile?.role !== 'owner' && profile?.role !== 'cydcor') {
+      return c.json({ error: 'Only owners can delete goals' }, 403);
+    }
+    
+    // Get existing goals array
+    const existingGoals = await kvStore.get(`goals_array:${profile.office_id}`) || [];
+    
+    // Filter out the deleted goal
+    const updatedGoals = existingGoals.filter((g: any) => g.id !== goalId);
+    await kvStore.set(`goals_array:${profile.office_id}`, updatedGoals);
+    
+    return c.json({ success: true });
+  } catch (error) {
+    console.error('Delete goal error:', error);
     return c.json({ error: 'Internal server error' }, 500);
   }
 });

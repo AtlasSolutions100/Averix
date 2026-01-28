@@ -438,4 +438,57 @@ export const goalsAPI = {
       throw error;
     }
   },
+
+  // Create a new goal
+  createGoal: async (goal: any) => {
+    try {
+      const response = await fetch(`${getAPIBase()}/goals`, {
+        method: 'POST',
+        headers: await getAuthHeaders(),
+        body: JSON.stringify(goal),
+      });
+      
+      if (!response.ok) {
+        let errorMsg = 'Failed to create goal';
+        try {
+          const error = await response.json();
+          errorMsg = error.error || errorMsg;
+        } catch (e) {
+          errorMsg = await response.text();
+        }
+        throw new Error(errorMsg);
+      }
+      
+      return response.json();
+    } catch (error) {
+      console.error('Create goal API error:', error);
+      throw error;
+    }
+  },
+
+  // Delete a goal
+  deleteGoal: async (goalId: string) => {
+    try {
+      const response = await fetch(`${getAPIBase()}/goals/${goalId}`, {
+        method: 'DELETE',
+        headers: await getAuthHeaders(),
+      });
+      
+      if (!response.ok) {
+        let errorMsg = 'Failed to delete goal';
+        try {
+          const error = await response.json();
+          errorMsg = error.error || errorMsg;
+        } catch (e) {
+          errorMsg = await response.text();
+        }
+        throw new Error(errorMsg);
+      }
+      
+      return response.json();
+    } catch (error) {
+      console.error('Delete goal API error:', error);
+      throw error;
+    }
+  },
 };

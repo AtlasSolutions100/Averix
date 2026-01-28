@@ -32,10 +32,12 @@ export function GoalsView({ user }: GoalsViewProps) {
     
     try {
       const { goals: goalsData } = await goalsAPI.getGoals(user.officeId);
-      setGoals(goalsData || []);
+      // Ensure goals is always an array
+      setGoals(Array.isArray(goalsData) ? goalsData : []);
     } catch (error) {
       console.error('Failed to load goals:', error);
       toast.error('Failed to load goals');
+      setGoals([]); // Set empty array on error
     } finally {
       setLoading(false);
     }
