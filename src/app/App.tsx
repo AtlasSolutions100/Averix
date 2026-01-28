@@ -122,20 +122,18 @@ function AppContent() {
               console.error('❌ getMe API error:', userError.message);
               console.log('ℹ️ Session exists but profile fetch failed. Clearing session...');
               // Clear invalid session
-              try {
-                await authAPI.signOut();
-                console.log('✅ Invalid session cleared');
-              } catch (signOutError) {
-                // If signout fails, just clear local session manually
-                console.warn('Could not sign out cleanly, clearing local session');
-                localStorage.removeItem('veridex-auth-token');
-              }
+              await authAPI.signOut();
             }
           } else {
-            console.log('ℹ️ No active session found (user needs to log in)');
+            console.log('ℹ️ No active session found');
           }
         } catch (sessionError: any) {
-          console.error('❌ Session check error:', sessionError);
+          // Suppress expected "Invalid login credentials" error for expired/missing sessions
+          if (sessionError.message?.includes('Invalid login credentials')) {
+            console.log('ℹ️ No valid session (expired or not logged in)');
+          } else {
+            console.warn('⚠️ Session check error:', sessionError.message);
+          }
           // Clear any corrupted session data
           localStorage.removeItem('veridex-auth-token');
         }

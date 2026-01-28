@@ -17,7 +17,9 @@ export function LOAAnalyzerView({ user }: LOAAnalyzerViewProps) {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [metrics, setMetrics] = useState<any>(null);
-  const [goals, setGoals] = useState<any>({
+  
+  // Default goals structure
+  const defaultGoals = {
     dailyContacts: 50,
     dailySales: 3,
     dailyRevenue: 360,
@@ -30,7 +32,9 @@ export function LOAAnalyzerView({ user }: LOAAnalyzerViewProps) {
     contactsPerSale: 7,
     presentationsPerSale: 3,
     stopsPerContact: 2,
-  });
+  };
+  
+  const [goals, setGoals] = useState<any>(defaultGoals);
 
   useEffect(() => {
     const loadData = async () => {
@@ -54,25 +58,13 @@ export function LOAAnalyzerView({ user }: LOAAnalyzerViewProps) {
           setMetrics(analyticsRes.metrics);
         }
         if (goalsRes?.goals) {
-          setGoals(goalsRes.goals);
+          // Merge with defaults to ensure all properties exist
+          setGoals({ ...defaultGoals, ...goalsRes.goals });
         }
       } catch (error) {
         console.error('Failed to load LOA data:', error);
         // Set default goals on error
-        setGoals({
-          dailyContacts: 50,
-          dailySales: 3,
-          dailyRevenue: 360,
-          weeklyContacts: 250,
-          weeklySales: 15,
-          weeklyRevenue: 1800,
-          monthlyContacts: 1000,
-          monthlySales: 60,
-          monthlyRevenue: 7200,
-          contactsPerSale: 7,
-          presentationsPerSale: 3,
-          stopsPerContact: 2,
-        });
+        setGoals(defaultGoals);
       } finally {
         setLoading(false);
       }

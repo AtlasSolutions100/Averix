@@ -669,7 +669,8 @@ app.put("/make-server-45dc47a9/goals/:officeId", requireAuth, async (c) => {
     }
     
     const goals = await c.req.json();
-    await kvStore.set(`goals:${officeId}`, goals);
+    // FIX: Use goals_array key to match GET endpoint
+    await kvStore.set(`goals_array:${officeId}`, goals);
     
     return c.json({ success: true, goals });
   } catch (error) {

@@ -53,13 +53,13 @@ export function OwnerLayout({ user, onLogout }: OwnerLayoutProps) {
   const menuItems = [
     { id: "dashboard" as ViewType, label: "Dashboard", icon: LayoutDashboard },
     { id: "reps" as ViewType, label: "Reps", icon: Users },
-    { id: "storeManagement" as ViewType, label: "Stores", icon: Store },
+    { id: "stores" as ViewType, label: "Stores", icon: Store },
+    { id: "storeManagement" as ViewType, label: "Store Management", icon: Building2 },
     { id: "loa" as ViewType, label: "LOA Analyzer", icon: TrendingUp },
     { id: "goals" as ViewType, label: "Goals", icon: Target },
     { id: "team" as ViewType, label: "Team", icon: UsersRound },
     { id: "officeSettings" as ViewType, label: "Settings", icon: Settings },
     { id: "entries" as ViewType, label: "Entries", icon: ClipboardList },
-    { id: "storePerformance" as ViewType, label: "Store Performance", icon: PieChart },
   ];
 
   return (
@@ -132,7 +132,8 @@ export function OwnerLayout({ user, onLogout }: OwnerLayoutProps) {
             <p className="text-sm text-muted-foreground mt-0.5">
               {currentView === "dashboard" && "Office-wide performance clarity"}
               {currentView === "reps" && "Volume vs efficiency — who scales, who doesn't"}
-              {currentView === "storeManagement" && "Manage retail locations and performance tracking"}
+              {currentView === "stores" && "Track store visits and performance by location"}
+              {currentView === "storeManagement" && "Add and manage retail locations"}
               {currentView === "loa" && "Math-based coaching instead of 'try harder'"}
               {currentView === "goals" && "Set and track your goals"}
               {currentView === "team" && "Create and manage team member accounts"}
@@ -155,6 +156,7 @@ export function OwnerLayout({ user, onLogout }: OwnerLayoutProps) {
         <div className="flex-1 overflow-auto">
           {currentView === "dashboard" && <OwnerDashboardView user={user} />}
           {currentView === "reps" && <RepsView user={user} />}
+          {currentView === "stores" && <StoresView user={user} />}
           {currentView === "storeManagement" && <StoreManagementView user={user} />}
           {currentView === "loa" && <LOAAnalyzerView user={user} />}
           {currentView === "goals" && <GoalsView user={user} />}
