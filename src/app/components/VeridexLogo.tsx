@@ -7,7 +7,7 @@ interface VeridexLogoProps {
 export function VeridexLogo({ className = "w-8 h-8" }: VeridexLogoProps) {
   return (
     <ImageWithFallback
-      src="https://xyeoogvecvmbuvoczuva.supabase.co/storage/v1/object/public/Veridex%20logo/Veridex-Logo.png"
+      src="https://xyeoogvecvmbuvoczuva.supabase.co/storage/v1/object/public/Veridex%20logo/Veridex.png"
       alt="Veridex Logo"
       className={className}
     />
