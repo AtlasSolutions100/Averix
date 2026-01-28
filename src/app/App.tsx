@@ -5,6 +5,7 @@ import { OwnerLayout } from "@/app/components/OwnerLayout";
 import { RepLayout } from "@/app/components/RepLayout";
 import { Toaster } from "@/app/components/ui/sonner";
 import { useSEO, SEO_CONFIGS } from "@/hooks/useSEO";
+import { useFavicon } from "@/hooks/useFavicon";
 
 export type UserRole = "owner" | "rep" | "cydcor";
 
@@ -215,6 +216,9 @@ function AppContent() {
 }
 
 export default function App() {
+  // Set favicon for the entire app
+  useFavicon();
+  
   return (
     <ErrorBoundary>
       <AppContent />
