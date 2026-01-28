@@ -52,7 +52,23 @@ export function RepDashboardView({ user }: RepDashboardViewProps) {
         ]);
 
         const { entries } = entriesRes;
-        setGoals(goalsRes.goals);
+        
+        // Handle both old object structure and new array structure for goals
+        const rawGoals = goalsRes?.goals || goalsRes;
+        
+        // If rawGoals is an object (old structure from LOA Analyzer), treat it as office-wide goals
+        if (rawGoals && !Array.isArray(rawGoals) && typeof rawGoals === 'object') {
+          setGoals(rawGoals); // Old structure: single object with dailyContacts, weeklySales, etc.
+          setPersonalGoals([]); // No personal goals in old structure
+        } else {
+          // New structure: array of goal objects
+          const allGoals = Array.isArray(rawGoals) ? rawGoals : [];
+          const officeGoals = allGoals.filter((g: any) => !g.userId); // Goals without userId are office-wide
+          const myPersonalGoals = allGoals.filter((g: any) => g.userId === user.id); // Goals with my userId
+          
+          setGoals(officeGoals);
+          setPersonalGoals(myPersonalGoals);
+        }
 
         if (entries && entries.length > 0) {
           // Calculate totals
@@ -232,9 +248,21 @@ export function RepDashboardView({ user }: RepDashboardViewProps) {
             setNewGoal={setNewGoal}
             user={user}
             onPersonalGoalsUpdate={() => {
-              // Reload personal goals
+              // Reload all goals and re-filter
               goalsAPI.getGoals(user.officeId).then(res => {
-                setPersonalGoals(Array.isArray(res.goals) ? res.goals : []);
+                const rawGoals = res?.goals || res;
+                
+                // Handle both structures
+                if (rawGoals && !Array.isArray(rawGoals) && typeof rawGoals === 'object') {
+                  setGoals(rawGoals);
+                  setPersonalGoals([]);
+                } else {
+                  const allGoals = Array.isArray(rawGoals) ? rawGoals : [];
+                  const officeGoals = allGoals.filter((g: any) => !g.userId);
+                  const myPersonalGoals = allGoals.filter((g: any) => g.userId === user.id);
+                  setGoals(officeGoals);
+                  setPersonalGoals(myPersonalGoals);
+                }
               });
             }}
           />
@@ -376,47 +404,88 @@ function GoalsCard({
       {/* Office Goals Tab */}
       {goalsTab === "office" && (
         <div className="space-y-4">
-          <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg">
-            <h4 className="text-xs font-semibold text-blue-400 mb-2">Daily Targets</h4>
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <p className="text-xs text-blue-400">Contacts</p>
-                <p className="text-xl font-bold text-foreground">{goals.dailyContacts}</p>
+          {/* Check if goals is an object (old structure) or array (new structure) */}
+          {!Array.isArray(goals) ? (
+            // Old structure: single object with dailyContacts, weeklySales, etc.
+            <>
+              <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+                <h4 className="text-xs font-semibold text-blue-400 mb-2">Daily Targets</h4>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <p className="text-xs text-blue-400">Contacts</p>
+                    <p className="text-xl font-bold text-foreground">{goals.dailyContacts || 0}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-blue-400">Sales</p>
+                    <p className="text-xl font-bold text-foreground">{goals.dailySales || 0}</p>
+                  </div>
+                </div>
               </div>
-              <div>
-                <p className="text-xs text-blue-400">Sales</p>
-                <p className="text-xl font-bold text-foreground">{goals.dailySales}</p>
-              </div>
-            </div>
-          </div>
 
-          <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
-            <h4 className="text-xs font-semibold text-green-400 mb-2">Weekly Targets</h4>
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <p className="text-xs text-green-400">Contacts</p>
-                <p className="text-xl font-bold text-foreground">{goals.weeklyContacts}</p>
+              <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
+                <h4 className="text-xs font-semibold text-green-400 mb-2">Weekly Targets</h4>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <p className="text-xs text-green-400">Contacts</p>
+                    <p className="text-xl font-bold text-foreground">{goals.weeklyContacts || 0}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-green-400">Sales</p>
+                    <p className="text-xl font-bold text-foreground">{goals.weeklySales || 0}</p>
+                  </div>
+                </div>
               </div>
-              <div>
-                <p className="text-xs text-green-400">Sales</p>
-                <p className="text-xl font-bold text-foreground">{goals.weeklySales}</p>
-              </div>
-            </div>
-          </div>
 
-          <div className="p-4 bg-purple-500/10 border border-purple-500/20 rounded-lg">
-            <h4 className="text-xs font-semibold text-purple-400 mb-2">Monthly Targets</h4>
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <p className="text-xs text-purple-400">Contacts</p>
-                <p className="text-xl font-bold text-foreground">{goals.monthlyContacts}</p>
+              <div className="p-4 bg-purple-500/10 border border-purple-500/20 rounded-lg">
+                <h4 className="text-xs font-semibold text-purple-400 mb-2">Monthly Targets</h4>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <p className="text-xs text-purple-400">Contacts</p>
+                    <p className="text-xl font-bold text-foreground">{goals.monthlyContacts || 0}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-purple-400">Sales</p>
+                    <p className="text-xl font-bold text-foreground">{goals.monthlySales || 0}</p>
+                  </div>
+                </div>
               </div>
-              <div>
-                <p className="text-xs text-purple-400">Sales</p>
-                <p className="text-xl font-bold text-foreground">{goals.monthlySales}</p>
-              </div>
+            </>
+          ) : goals.length > 0 ? (
+            // New structure: array of goal objects
+            <div className="space-y-2">
+              <p className="text-xs text-muted-foreground mb-3">Office-wide performance targets</p>
+              {goals.map((goal: any) => (
+                <div key={goal.id} className="p-3 bg-secondary/30 border border-border rounded-lg">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <Target className="size-4 text-primary" />
+                      <span className="text-sm font-medium text-foreground capitalize">
+                        {goal.metric}
+                      </span>
+                      <Badge variant="secondary" className="text-xs">
+                        {goal.period}
+                      </Badge>
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-xs text-muted-foreground">
+                      <span>Target</span>
+                      <span className="font-medium text-foreground">
+                        {goal.target}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
-          </div>
+          ) : (
+            // No office goals yet
+            <div className="text-center py-8">
+              <Target className="size-10 text-muted-foreground/50 mx-auto mb-2" />
+              <p className="text-sm text-muted-foreground">No office goals set yet</p>
+              <p className="text-xs text-muted-foreground mt-1">Ask your owner to set office-wide goals</p>
+            </div>
+          )}
         </div>
       )}
 

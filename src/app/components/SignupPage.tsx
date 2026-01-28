@@ -54,7 +54,7 @@ export function SignupPage({ onSignup, onBackToLogin }: SignupPageProps) {
         password,
         name,
         role,
-        role === "owner" ? "" : officeId
+        role === "owner" ? officeName : officeId
       );
 
       console.log("Signup successful:", signupData);

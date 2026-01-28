@@ -90,6 +90,32 @@ app.get("/make-server-45dc47a9/health", (c) => {
   return c.json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
+// Debug endpoint to check user's profile
+app.get("/make-server-45dc47a9/debug/my-profile", requireAuth, async (c) => {
+  try {
+    const user = c.get('user');
+    const supabase = getSupabaseClient();
+    
+    const { data: profile, error } = await supabase
+      .from('user_profiles')
+      .select('*')
+      .eq('id', user.id)
+      .single();
+    
+    if (error) {
+      return c.json({ error: error.message, userId: user.id }, 400);
+    }
+    
+    return c.json({ 
+      profile,
+      decodedToken: user,
+      message: "This is your current profile data"
+    });
+  } catch (error) {
+    return c.json({ error: String(error) }, 500);
+  }
+});
+
 // ============================================================================
 // AUTHENTICATION ENDPOINTS
 // ============================================================================
@@ -739,19 +765,36 @@ app.post("/make-server-45dc47a9/goals", requireAuth, async (c) => {
     const supabase = getSupabaseClient();
     const goalData = await c.req.json();
     
-    // Verify user is owner
-    const { data: profile } = await supabase
+    // Get user profile
+    const { data: profile, error: profileError } = await supabase
       .from('user_profiles')
       .select('role, office_id')
       .eq('id', user.id)
       .single();
     
-    if (profile?.role !== 'owner' && profile?.role !== 'cydcor') {
-      return c.json({ error: 'Only owners can create goals' }, 403);
+    if (profileError) {
+      console.error('❌ Failed to fetch user profile for goal creation:', profileError);
+      return c.json({ error: 'Failed to verify user permissions' }, 500);
+    }
+    
+    if (!profile) {
+      console.error('❌ No profile found for user:', user.id);
+      return c.json({ error: 'User profile not found' }, 404);
+    }
+    
+    console.log('✅ User profile for goal creation:', { userId: user.id, role: profile.role, officeId: profile.office_id });
+    
+    // Verify office ID matches (security check)
+    if (goalData.officeId !== profile.office_id) {
+      console.error('❌ Office ID mismatch:', { requested: goalData.officeId, userOffice: profile.office_id });
+      return c.json({ error: 'Cannot create goals for other offices' }, 403);
     }
     
     // Get existing goals array
-    const existingGoals = await kvStore.get(`goals_array:${goalData.officeId}`) || [];
+    const rawExistingGoals = await kvStore.get(`goals_array:${profile.office_id}`);
+    const existingGoals = Array.isArray(rawExistingGoals) ? rawExistingGoals : [];
+    
+    console.log('📊 Existing goals:', { count: existingGoals.length, type: typeof rawExistingGoals });
     
     // Create new goal with ID
     const newGoal = {
@@ -759,12 +802,20 @@ app.post("/make-server-45dc47a9/goals", requireAuth, async (c) => {
       ...goalData,
       current: 0,
       createdAt: new Date().toISOString(),
+      // Add userId for personal goals (reps), null for office-wide goals (owners)
+      userId: profile.role === 'rep' ? user.id : null,
+      createdBy: profile.role,
     };
     
     // Add to array
     const updatedGoals = [...existingGoals, newGoal];
-    await kvStore.set(`goals_array:${goalData.officeId}`, updatedGoals);
+    await kvStore.set(`goals_array:${profile.office_id}`, updatedGoals);
     
+    console.log('✅ Goal created successfully:', { 
+      goalId: newGoal.id, 
+      type: profile.role === 'rep' ? 'personal' : 'office-wide',
+      userId: newGoal.userId 
+    });
     return c.json({ success: true, goal: newGoal });
   } catch (error) {
     console.error('Create goal error:', error);
@@ -779,24 +830,39 @@ app.delete("/make-server-45dc47a9/goals/:goalId", requireAuth, async (c) => {
     const supabase = getSupabaseClient();
     const goalId = c.req.param('goalId');
     
-    // Verify user is owner
+    // Get user profile
     const { data: profile } = await supabase
       .from('user_profiles')
       .select('role, office_id')
       .eq('id', user.id)
       .single();
     
-    if (profile?.role !== 'owner' && profile?.role !== 'cydcor') {
-      return c.json({ error: 'Only owners can delete goals' }, 403);
-    }
-    
     // Get existing goals array
     const existingGoals = await kvStore.get(`goals_array:${profile.office_id}`) || [];
+    
+    // Find the goal to delete
+    const goalToDelete = existingGoals.find((g: any) => g.id === goalId);
+    
+    if (!goalToDelete) {
+      return c.json({ error: 'Goal not found' }, 404);
+    }
+    
+    // Permission check:
+    // - Owners can delete any goal in their office
+    // - Reps can only delete their own personal goals
+    const isOwner = profile.role === 'owner' || profile.role === 'cydcor';
+    const isOwnGoal = goalToDelete.userId === user.id;
+    
+    if (!isOwner && !isOwnGoal) {
+      console.error('❌ Permission denied - rep trying to delete someone else\'s goal');
+      return c.json({ error: 'You can only delete your own personal goals' }, 403);
+    }
     
     // Filter out the deleted goal
     const updatedGoals = existingGoals.filter((g: any) => g.id !== goalId);
     await kvStore.set(`goals_array:${profile.office_id}`, updatedGoals);
     
+    console.log('✅ Goal deleted:', { goalId, deletedBy: user.id, role: profile.role });
     return c.json({ success: true });
   } catch (error) {
     console.error('Delete goal error:', error);
