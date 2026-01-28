@@ -92,11 +92,25 @@ export const authAPI = {
   },
 
   // Sign up new user
-  signUp: async (email: string, password: string, name: string, role: string, officeId: string) => {
+  signUp: async (email: string, password: string, name: string, role: string, officeIdOrName: string) => {
+    const payload: any = { email, password, name, role };
+    
+    // If owner, pass officeName; if rep, pass officeId
+    if (role === 'owner') {
+      payload.officeName = officeIdOrName;
+    } else {
+      payload.officeId = officeIdOrName;
+    }
+    
+    // Signup doesn't require authentication, just basic headers
+    loadConfig();
     const response = await fetch(`${getAPIBase()}/auth/signup`, {
       method: 'POST',
-      headers: await getAuthHeaders(),
-      body: JSON.stringify({ email, password, name, role, officeId }),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${publicAnonKey}`, // Use anon key for Supabase gateway
+      },
+      body: JSON.stringify(payload),
     });
     
     if (!response.ok) {
@@ -355,6 +369,53 @@ export const storesAPI = {
     
     return response.json();
   },
+
+  // Create store (owner only)
+  createStore: async (store: { name: string; brand?: string; location?: string }) => {
+    const response = await fetch(`${getAPIBase()}/stores`, {
+      method: 'POST',
+      headers: await getAuthHeaders(),
+      body: JSON.stringify(store),
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to create store');
+    }
+    
+    return response.json();
+  },
+
+  // Update store (owner only)
+  updateStore: async (storeId: string, updates: { name?: string; brand?: string; location?: string }) => {
+    const response = await fetch(`${getAPIBase()}/stores/${storeId}`, {
+      method: 'PUT',
+      headers: await getAuthHeaders(),
+      body: JSON.stringify(updates),
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to update store');
+    }
+    
+    return response.json();
+  },
+
+  // Delete store (owner only)
+  deleteStore: async (storeId: string) => {
+    const response = await fetch(`${getAPIBase()}/stores/${storeId}`, {
+      method: 'DELETE',
+      headers: await getAuthHeaders(),
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to delete store');
+    }
+    
+    return response.json();
+  },
 };
 
 // ============================================================================
@@ -374,6 +435,53 @@ export const usersAPI = {
     if (!response.ok) {
       const error = await response.json();
       throw new Error(error.error || 'Failed to fetch users');
+    }
+    
+    return response.json();
+  },
+
+  // Create rep (owner only)
+  createRep: async (rep: { email: string; password: string; name: string }) => {
+    const response = await fetch(`${getAPIBase()}/users/create-rep`, {
+      method: 'POST',
+      headers: await getAuthHeaders(),
+      body: JSON.stringify(rep),
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to create rep');
+    }
+    
+    return response.json();
+  },
+
+  // Update user (owner only)
+  updateUser: async (userId: string, updates: { name?: string; email?: string }) => {
+    const response = await fetch(`${getAPIBase()}/users/${userId}`, {
+      method: 'PUT',
+      headers: await getAuthHeaders(),
+      body: JSON.stringify(updates),
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to update user');
+    }
+    
+    return response.json();
+  },
+
+  // Delete user (owner only)
+  deleteUser: async (userId: string) => {
+    const response = await fetch(`${getAPIBase()}/users/${userId}`, {
+      method: 'DELETE',
+      headers: await getAuthHeaders(),
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to delete user');
     }
     
     return response.json();

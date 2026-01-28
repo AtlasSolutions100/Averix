@@ -1,5 +1,6 @@
 import { useState, useEffect, Component, ErrorInfo, ReactNode } from "react";
 import { LoginPage } from "@/app/components/LoginPage";
+import { SignupPage } from "@/app/components/SignupPage";
 import { OwnerLayout } from "@/app/components/OwnerLayout";
 import { RepLayout } from "@/app/components/RepLayout";
 import { Toaster } from "@/app/components/ui/sonner";
@@ -64,6 +65,7 @@ class ErrorBoundary extends Component<
 function AppContent() {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [showSignup, setShowSignup] = useState(false);
 
   useEffect(() => {
     // Initialize config synchronously
@@ -107,20 +109,34 @@ function AppContent() {
         // Now check for existing session
         const { authAPI } = await import('@/services/api');
         
-        const session = await authAPI.getSession();
-        if (session) {
-          console.log('✅ Session found, fetching user...');
-          try {
-            const userData = await authAPI.getMe();
-            console.log('✅ User loaded:', userData.name);
-            setUser(userData);
-          } catch (userError: any) {
-            console.error('❌ Failed to load user profile:', userError.message);
-            // Clear invalid session
-            await authAPI.signOut();
+        try {
+          const session = await authAPI.getSession();
+          if (session) {
+            console.log('✅ Session found, fetching user...');
+            try {
+              const userData = await authAPI.getMe();
+              console.log('✅ User loaded:', userData.name);
+              setUser(userData);
+            } catch (userError: any) {
+              console.error('❌ getMe API error:', userError.message);
+              console.log('ℹ️ Session exists but profile fetch failed. Clearing session...');
+              // Clear invalid session
+              try {
+                await authAPI.signOut();
+                console.log('✅ Invalid session cleared');
+              } catch (signOutError) {
+                // If signout fails, just clear local session manually
+                console.warn('Could not sign out cleanly, clearing local session');
+                localStorage.removeItem('veridex-auth-token');
+              }
+            }
+          } else {
+            console.log('ℹ️ No active session found (user needs to log in)');
           }
-        } else {
-          console.log('ℹ️ No active session found (user needs to log in)');
+        } catch (sessionError: any) {
+          console.error('❌ Session check error:', sessionError);
+          // Clear any corrupted session data
+          localStorage.removeItem('veridex-auth-token');
         }
       } catch (error) {
         console.error('❌ Initialization failed:', error);
@@ -165,7 +181,17 @@ function AppContent() {
   if (!user) {
     return (
       <>
-        <LoginPage onLogin={handleLogin} />
+        {showSignup ? (
+          <SignupPage 
+            onSignup={handleLogin} 
+            onBackToLogin={() => setShowSignup(false)} 
+          />
+        ) : (
+          <LoginPage 
+            onLogin={handleLogin} 
+            onSwitchToSignup={() => setShowSignup(true)} 
+          />
+        )}
         <Toaster />
       </>
     );

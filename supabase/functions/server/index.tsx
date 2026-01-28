@@ -97,9 +97,36 @@ app.get("/make-server-45dc47a9/health", (c) => {
 // Sign up new user
 app.post("/make-server-45dc47a9/auth/signup", async (c) => {
   try {
-    const { email, password, name, role, officeId } = await c.req.json();
+    const { email, password, name, role, officeId, officeName } = await c.req.json();
     
     const supabase = getSupabaseClient();
+    
+    let finalOfficeId = officeId;
+    
+    // If user is an owner and no officeId provided, create a new office
+    if (role === 'owner' && !officeId) {
+      const newOfficeName = officeName || `${name}'s Office`;
+      console.log(`Creating new office: ${newOfficeName}`);
+      
+      const { data: newOffice, error: officeError } = await supabase
+        .from('offices')
+        .insert({ name: newOfficeName })
+        .select()
+        .single();
+      
+      if (officeError) {
+        console.error('Office creation error:', officeError);
+        return c.json({ error: officeError.message }, 400);
+      }
+      
+      finalOfficeId = newOffice.id;
+      console.log(`✅ Created office: ${newOfficeName} (${finalOfficeId})`);
+    }
+    
+    // Validate we have an office_id
+    if (!finalOfficeId) {
+      return c.json({ error: 'Office ID required. Owners must provide office name, reps must provide office ID.' }, 400);
+    }
     
     // Create auth user
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
@@ -121,7 +148,7 @@ app.post("/make-server-45dc47a9/auth/signup", async (c) => {
         email,
         name,
         role,
-        office_id: officeId,
+        office_id: finalOfficeId,
       })
       .select()
       .single();
@@ -131,7 +158,9 @@ app.post("/make-server-45dc47a9/auth/signup", async (c) => {
       return c.json({ error: profileError.message }, 400);
     }
     
-    return c.json({ user: profile });
+    console.log(`✅ Created user: ${name} (${role}) in office ${finalOfficeId}`);
+    
+    return c.json({ user: profile, officeId: finalOfficeId });
   } catch (error) {
     console.error('Signup error:', error);
     return c.json({ error: 'Internal server error during signup' }, 500);
@@ -145,11 +174,11 @@ app.get("/make-server-45dc47a9/auth/me", async (c) => {
     const token = c.req.header('X-User-Token');
     
     if (!token) {
-      console.error('❌ No token in auth/me');
-      return c.json({ error: 'No token provided' }, 401);
+      console.error('❌ No token in auth/me request');
+      return c.json({ error: 'No authentication token provided. Please log in again.' }, 401);
     }
     
-    console.log('🔍 Received token in auth/me, length:', token.length);
+    console.log('🔍 Received auth/me request, token length:', token.length);
     
     // Decode JWT without validation
     let userId;
@@ -160,25 +189,25 @@ app.get("/make-server-45dc47a9/auth/me", async (c) => {
         while (base64.length % 4) base64 += '=';
         const payload = JSON.parse(atob(base64));
         userId = payload.sub;
-        console.log('✅ Decoded user ID:', userId);
+        console.log('✅ Decoded user ID from token:', userId);
       } else {
         console.error('❌ Token has wrong number of parts:', parts.length);
-        return c.json({ error: 'Invalid token format' }, 401);
+        return c.json({ error: 'Invalid token format. Please log in again.' }, 401);
       }
     } catch (e) {
       console.error('❌ Failed to decode token:', e);
-      return c.json({ error: 'Failed to decode token' }, 401);
+      return c.json({ error: 'Failed to decode authentication token. Please log in again.' }, 401);
     }
     
     if (!userId) {
-      console.error('❌ No user ID in token');
-      return c.json({ error: 'No user ID in token' }, 401);
+      console.error('❌ No user ID extracted from token');
+      return c.json({ error: 'No user ID in token. Please log in again.' }, 401);
     }
     
     // Use SERVICE_ROLE_KEY to bypass RLS policies
     const supabase = getSupabaseClient();
     
-    console.log('🔍 Fetching profile for user:', userId);
+    console.log('🔍 Fetching profile for user ID:', userId);
     
     const { data: profile, error } = await supabase
       .from('user_profiles')
@@ -187,16 +216,18 @@ app.get("/make-server-45dc47a9/auth/me", async (c) => {
       .single();
     
     if (error) {
-      console.error('❌ Profile fetch error:', error);
-      return c.json({ error: error.message }, 400);
+      console.error('❌ Database error fetching profile:', error.message);
+      return c.json({ error: `Database error: ${error.message}` }, 400);
     }
     
     if (!profile) {
-      console.error('❌ No profile found for user:', userId);
-      return c.json({ error: 'User profile not found in database. Please run the SQL setup script from QUICK_START.md Step 2.2' }, 404);
+      console.error('❌ No profile found for user ID:', userId);
+      return c.json({ 
+        error: 'User profile not found. Your account may not be set up correctly. Please contact support.' 
+      }, 404);
     }
     
-    console.log('✅ Successfully fetched profile for:', profile.email);
+    console.log('✅ Successfully fetched profile for:', profile.email, '(role:', profile.role, ')');
     
     return c.json({
       id: profile.id,
@@ -208,8 +239,8 @@ app.get("/make-server-45dc47a9/auth/me", async (c) => {
       avatar: profile.avatar,
     });
   } catch (error) {
-    console.error('❌ Get user error:', error);
-    return c.json({ error: 'Internal server error fetching user' }, 500);
+    console.error('❌ Unexpected error in auth/me:', error);
+    return c.json({ error: 'Internal server error. Please try again later.' }, 500);
   }
 });
 
@@ -756,6 +787,130 @@ app.get("/make-server-45dc47a9/stores", requireAuth, async (c) => {
   }
 });
 
+// Create store (owner only)
+app.post("/make-server-45dc47a9/stores", requireAuth, async (c) => {
+  try {
+    const user = c.get('user');
+    const supabase = getSupabaseClient();
+    const { name, brand, location } = await c.req.json();
+    
+    // Get user's profile to verify role and office
+    const { data: profile } = await supabase
+      .from('user_profiles')
+      .select('role, office_id')
+      .eq('id', user.id)
+      .single();
+    
+    // Only owners can create stores
+    if (profile?.role !== 'owner' && profile?.role !== 'cydcor') {
+      return c.json({ error: 'Only owners can create stores' }, 403);
+    }
+    
+    // Create store
+    const { data: store, error } = await supabase
+      .from('stores')
+      .insert({
+        office_id: profile.office_id,
+        name,
+        brand,
+        location,
+        is_active: true,
+      })
+      .select()
+      .single();
+    
+    if (error) {
+      console.error('Store creation error:', error);
+      return c.json({ error: error.message }, 400);
+    }
+    
+    console.log(`✅ Created store: ${name} in office ${profile.office_id}`);
+    return c.json({ store });
+  } catch (error) {
+    console.error('Create store error:', error);
+    return c.json({ error: 'Internal server error creating store' }, 500);
+  }
+});
+
+// Update store (owner only)
+app.put("/make-server-45dc47a9/stores/:storeId", requireAuth, async (c) => {
+  try {
+    const user = c.get('user');
+    const supabase = getSupabaseClient();
+    const storeId = c.req.param('storeId');
+    const updates = await c.req.json();
+    
+    // Get user's profile
+    const { data: profile } = await supabase
+      .from('user_profiles')
+      .select('role, office_id')
+      .eq('id', user.id)
+      .single();
+    
+    // Only owners can update stores
+    if (profile?.role !== 'owner' && profile?.role !== 'cydcor') {
+      return c.json({ error: 'Only owners can update stores' }, 403);
+    }
+    
+    // Update store (only if it belongs to user's office)
+    const { data: store, error } = await supabase
+      .from('stores')
+      .update(updates)
+      .eq('id', storeId)
+      .eq('office_id', profile.office_id)
+      .select()
+      .single();
+    
+    if (error) {
+      console.error('Store update error:', error);
+      return c.json({ error: error.message }, 400);
+    }
+    
+    return c.json({ store });
+  } catch (error) {
+    console.error('Update store error:', error);
+    return c.json({ error: 'Internal server error updating store' }, 500);
+  }
+});
+
+// Delete/deactivate store (owner only)
+app.delete("/make-server-45dc47a9/stores/:storeId", requireAuth, async (c) => {
+  try {
+    const user = c.get('user');
+    const supabase = getSupabaseClient();
+    const storeId = c.req.param('storeId');
+    
+    // Get user's profile
+    const { data: profile } = await supabase
+      .from('user_profiles')
+      .select('role, office_id')
+      .eq('id', user.id)
+      .single();
+    
+    // Only owners can delete stores
+    if (profile?.role !== 'owner' && profile?.role !== 'cydcor') {
+      return c.json({ error: 'Only owners can delete stores' }, 403);
+    }
+    
+    // Soft delete by setting is_active to false
+    const { error } = await supabase
+      .from('stores')
+      .update({ is_active: false })
+      .eq('id', storeId)
+      .eq('office_id', profile.office_id);
+    
+    if (error) {
+      console.error('Store delete error:', error);
+      return c.json({ error: error.message }, 400);
+    }
+    
+    return c.json({ success: true });
+  } catch (error) {
+    console.error('Delete store error:', error);
+    return c.json({ error: 'Internal server error deleting store' }, 500);
+  }
+});
+
 // ============================================================================
 // USERS ENDPOINTS
 // ============================================================================
@@ -797,4 +952,169 @@ app.get("/make-server-45dc47a9/users", requireAuth, async (c) => {
   }
 });
 
+// Create rep (owner only)
+app.post("/make-server-45dc47a9/users/create-rep", requireAuth, async (c) => {
+  try {
+    const user = c.get('user');
+    const supabase = getSupabaseClient();
+    const { email, password, name } = await c.req.json();
+    
+    // Get user's profile to verify role and office
+    const { data: profile } = await supabase
+      .from('user_profiles')
+      .select('role, office_id')
+      .eq('id', user.id)
+      .single();
+    
+    // Only owners can create reps
+    if (profile?.role !== 'owner' && profile?.role !== 'cydcor') {
+      return c.json({ error: 'Only owners can create rep accounts' }, 403);
+    }
+    
+    // Create auth user
+    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true, // Auto-confirm email since we don't have email server
+    });
+    
+    if (authError) {
+      console.error('Auth error creating rep:', authError);
+      return c.json({ error: authError.message }, 400);
+    }
+    
+    // Create user profile as rep in owner's office
+    const { data: repProfile, error: profileError } = await supabase
+      .from('user_profiles')
+      .insert({
+        id: authData.user.id,
+        email,
+        name,
+        role: 'rep',
+        office_id: profile.office_id,
+      })
+      .select()
+      .single();
+    
+    if (profileError) {
+      console.error('Profile creation error:', profileError);
+      return c.json({ error: profileError.message }, 400);
+    }
+    
+    console.log(`✅ Created rep: ${name} in office ${profile.office_id}`);
+    
+    return c.json({ 
+      rep: repProfile,
+      credentials: { email, password } // Return credentials so owner can share with rep
+    });
+  } catch (error) {
+    console.error('Create rep error:', error);
+    return c.json({ error: 'Internal server error creating rep' }, 500);
+  }
+});
+
+// Update user (owner only - for editing rep details)
+app.put("/make-server-45dc47a9/users/:userId", requireAuth, async (c) => {
+  try {
+    const user = c.get('user');
+    const supabase = getSupabaseClient();
+    const userId = c.req.param('userId');
+    const updates = await c.req.json();
+    
+    // Get requesting user's profile
+    const { data: profile } = await supabase
+      .from('user_profiles')
+      .select('role, office_id')
+      .eq('id', user.id)
+      .single();
+    
+    // Only owners can update users
+    if (profile?.role !== 'owner' && profile?.role !== 'cydcor') {
+      return c.json({ error: 'Only owners can update users' }, 403);
+    }
+    
+    // Update user (only if they belong to same office)
+    const { data: updatedUser, error } = await supabase
+      .from('user_profiles')
+      .update(updates)
+      .eq('id', userId)
+      .eq('office_id', profile.office_id)
+      .select()
+      .single();
+    
+    if (error) {
+      console.error('User update error:', error);
+      return c.json({ error: error.message }, 400);
+    }
+    
+    return c.json({ user: updatedUser });
+  } catch (error) {
+    console.error('Update user error:', error);
+    return c.json({ error: 'Internal server error updating user' }, 500);
+  }
+});
+
+// Delete/deactivate user (owner only)
+app.delete("/make-server-45dc47a9/users/:userId", requireAuth, async (c) => {
+  try {
+    const user = c.get('user');
+    const supabase = getSupabaseClient();
+    const userId = c.req.param('userId');
+    
+    // Get requesting user's profile
+    const { data: profile } = await supabase
+      .from('user_profiles')
+      .select('role, office_id')
+      .eq('id', user.id)
+      .single();
+    
+    // Only owners can delete users
+    if (profile?.role !== 'owner' && profile?.role !== 'cydcor') {
+      return c.json({ error: 'Only owners can delete users' }, 403);
+    }
+    
+    // Get the user to be deleted to verify they're in the same office
+    const { data: userToDelete } = await supabase
+      .from('user_profiles')
+      .select('office_id, role')
+      .eq('id', userId)
+      .single();
+    
+    if (userToDelete?.office_id !== profile.office_id) {
+      return c.json({ error: 'Cannot delete users from other offices' }, 403);
+    }
+    
+    // Don't allow deleting other owners
+    if (userToDelete?.role === 'owner' || userToDelete?.role === 'cydcor') {
+      return c.json({ error: 'Cannot delete owner accounts' }, 403);
+    }
+    
+    // Delete user profile (cascade will handle daily_entries)
+    const { error } = await supabase
+      .from('user_profiles')
+      .delete()
+      .eq('id', userId);
+    
+    if (error) {
+      console.error('User delete error:', error);
+      return c.json({ error: error.message }, 400);
+    }
+    
+    // Also delete from auth
+    const { error: authError } = await supabase.auth.admin.deleteUser(userId);
+    
+    if (authError) {
+      console.warn('Auth delete warning (user profile already deleted):', authError);
+    }
+    
+    return c.json({ success: true });
+  } catch (error) {
+    console.error('Delete user error:', error);
+    return c.json({ error: 'Internal server error deleting user' }, 500);
+  }
+});
+
+// ============================================================================
+// START SERVER
+// ============================================================================
 Deno.serve(app.fetch);

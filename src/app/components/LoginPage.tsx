@@ -10,9 +10,10 @@ import { VeridexLogo } from "@/app/components/VeridexLogo";
 
 interface LoginPageProps {
   onLogin: (user: User) => void;
+  onSwitchToSignup: () => void;
 }
 
-export function LoginPage({ onLogin }: LoginPageProps) {
+export function LoginPage({ onLogin, onSwitchToSignup }: LoginPageProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -34,10 +35,20 @@ export function LoginPage({ onLogin }: LoginPageProps) {
       toast.success("Welcome back!");
     } catch (err: any) {
       console.error('Login error:', err);
-      setError(err.message || "Invalid email or password");
-      toast.error("Login failed", {
-        description: err.message || "Please check your credentials"
-      });
+      
+      // Check if it's a server connectivity issue
+      if (err.message?.includes('Load failed') || err.message?.includes('fetch')) {
+        setError("⚠️ Cannot connect to server. Make sure the Supabase Edge Function is deployed. See SERVER_DEPLOYMENT_GUIDE.md for instructions.");
+        toast.error("Server not available", {
+          description: "The backend server needs to be deployed. Check the console for details.",
+          duration: 7000,
+        });
+      } else {
+        setError(err.message || "Invalid email or password");
+        toast.error("Login failed", {
+          description: err.message || "Please check your credentials"
+        });
+      }
     } finally {
       setIsLoading(false);
     }
@@ -167,6 +178,19 @@ export function LoginPage({ onLogin }: LoginPageProps) {
                 jake@olympus.com / demo
               </Button>
             </div>
+          </div>
+
+          {/* Signup Link */}
+          <div className="mt-6 text-center">
+            <p className="text-sm text-muted-foreground">
+              Don't have an account?{" "}
+              <button
+                onClick={onSwitchToSignup}
+                className="text-primary hover:underline font-medium"
+              >
+                Create one now
+              </button>
+            </p>
           </div>
         </Card>
 

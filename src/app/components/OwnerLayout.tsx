@@ -1,5 +1,5 @@
 import { ReactNode, useState } from "react";
-import { LogOut, LayoutDashboard, Users, Store, Target, TrendingUp, Settings, Grid, Bell } from "lucide-react";
+import { LogOut, LayoutDashboard, Users, Store, Target, TrendingUp, Settings, Grid, Bell, UsersRound } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
 import { VeridexLogo } from "@/app/components/VeridexLogo";
 import { User } from "@/app/App";
@@ -8,13 +8,14 @@ import { RepsView } from "@/app/components/RepsView";
 import { StoresView } from "@/app/components/StoresView";
 import { LOAAnalyzerView } from "@/app/components/LOAAnalyzerView";
 import { GoalsView } from "@/app/components/GoalsView";
+import { TeamManagement } from "@/app/components/TeamManagement";
 
 interface OwnerLayoutProps {
   user: User;
   onLogout: () => void;
 }
 
-type ViewType = "dashboard" | "reps" | "stores" | "loa" | "goals" | "admin";
+type ViewType = "dashboard" | "reps" | "stores" | "loa" | "goals" | "team" | "admin";
 
 export function OwnerLayout({ user, onLogout }: OwnerLayoutProps) {
   const [currentView, setCurrentView] = useState<ViewType>("dashboard");
@@ -25,6 +26,7 @@ export function OwnerLayout({ user, onLogout }: OwnerLayoutProps) {
     { id: "stores" as ViewType, label: "Stores", icon: Store },
     { id: "loa" as ViewType, label: "LOA Analyzer", icon: TrendingUp },
     { id: "goals" as ViewType, label: "Goals", icon: Target },
+    { id: "team" as ViewType, label: "Team Management", icon: UsersRound },
     { id: "admin" as ViewType, label: "Admin", icon: Settings },
   ];
 
@@ -101,6 +103,7 @@ export function OwnerLayout({ user, onLogout }: OwnerLayoutProps) {
               {currentView === "stores" && "Which retail locations actually convert"}
               {currentView === "loa" && "Math-based coaching instead of 'try harder'"}
               {currentView === "goals" && "Set and track your goals"}
+              {currentView === "team" && "Manage your team"}
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -120,6 +123,7 @@ export function OwnerLayout({ user, onLogout }: OwnerLayoutProps) {
           {currentView === "stores" && <StoresView user={user} />}
           {currentView === "loa" && <LOAAnalyzerView user={user} />}
           {currentView === "goals" && <GoalsView user={user} />}
+          {currentView === "team" && <TeamManagement user={user} />}
           {currentView === "admin" && (
             <div className="flex items-center justify-center h-full">
               <p className="text-gray-500">Admin settings coming soon</p>
