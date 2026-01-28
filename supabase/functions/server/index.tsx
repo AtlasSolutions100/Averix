@@ -333,6 +333,59 @@ app.get("/make-server-45dc47a9/entries/user/:userId", requireAuth, async (c) => 
   }
 });
 
+// Get all entries for an office (owner view)
+app.get("/make-server-45dc47a9/entries/office/:officeId", requireAuth, async (c) => {
+  try {
+    const officeId = c.req.param('officeId');
+    const supabase = getSupabaseClient();
+    const { startDate, endDate, limit = '100' } = c.req.query();
+    
+    // Verify user has access to this office
+    const user = c.get('user');
+    const { data: profile } = await supabase
+      .from('user_profiles')
+      .select('office_id, role')
+      .eq('id', user.id)
+      .single();
+    
+    // Only allow access if user belongs to the office or is cydcor admin
+    if (profile?.office_id !== officeId && profile?.role !== 'cydcor') {
+      return c.json({ error: 'Unauthorized access to office data' }, 403);
+    }
+    
+    // Get all entries for the office with user and store details
+    let query = supabase
+      .from('daily_entries')
+      .select(`
+        *,
+        user_profiles(id, name, email),
+        stores(id, name, brand, location)
+      `)
+      .eq('office_id', officeId)
+      .order('entry_date', { ascending: false })
+      .limit(parseInt(limit));
+    
+    if (startDate) {
+      query = query.gte('entry_date', startDate);
+    }
+    if (endDate) {
+      query = query.lte('entry_date', endDate);
+    }
+    
+    const { data, error } = await query;
+    
+    if (error) {
+      console.error('Fetch office entries error:', error);
+      return c.json({ error: error.message }, 400);
+    }
+    
+    return c.json({ entries: data });
+  } catch (error) {
+    console.error('Get office entries error:', error);
+    return c.json({ error: 'Internal server error fetching office entries' }, 500);
+  }
+});
+
 // ============================================================================
 // ANALYTICS ENDPOINTS
 // ============================================================================

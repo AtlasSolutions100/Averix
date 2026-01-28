@@ -60,16 +60,15 @@ export function EntriesView({ user }: EntriesViewProps) {
       }
       
       const options = dateFilter === "all" ? undefined : { startDate, endDate };
-      const data = await entriesAPI.getEntries(user.officeId, options);
+      const response = await entriesAPI.getEntries(user.officeId, options);
       
-      // Get user names for display
-      const usersData = await usersAPI.getUsers();
-      const usersMap = new Map(usersData.map((u: any) => [u.id, u.name]));
-      
-      // Enrich entries with user names
-      const enrichedEntries = data.map((entry: Entry) => ({
+      // The backend now returns nested user_profiles and stores objects
+      // Map to flat structure for display
+      const enrichedEntries = response.entries.map((entry: any) => ({
         ...entry,
-        user_name: usersMap.get(entry.user_id) || 'Unknown',
+        user_name: entry.user_profiles?.name || 'Unknown',
+        store_name: entry.stores?.name || 'Unknown Store',
+        date: entry.entry_date,
       }));
       
       setEntries(enrichedEntries);

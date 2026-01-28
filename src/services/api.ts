@@ -246,6 +246,25 @@ export const entriesAPI = {
     
     return response.json();
   },
+
+  // Get all entries for an office (owner view)
+  getEntries: async (officeId: string, options?: { startDate?: string; endDate?: string; limit?: number }) => {
+    const params = new URLSearchParams();
+    if (options?.startDate) params.append('startDate', options.startDate);
+    if (options?.endDate) params.append('endDate', options.endDate);
+    if (options?.limit) params.append('limit', options.limit.toString());
+    
+    const response = await fetch(`${getAPIBase()}/entries/office/${officeId}?${params}`, {
+      headers: await getAuthHeaders(),
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to fetch office entries');
+    }
+    
+    return response.json();
+  },
 };
 
 // ============================================================================
