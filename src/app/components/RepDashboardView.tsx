@@ -1,8 +1,12 @@
 import { useState, useEffect } from "react";
 import { Card } from "@/app/components/ui/card";
+import { Button } from "@/app/components/ui/button";
+import { Input } from "@/app/components/ui/input";
+import { Badge } from "@/app/components/ui/badge";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { TrendingUp, Calendar, DollarSign, Target, Loader2 } from "lucide-react";
+import { TrendingUp, Calendar, DollarSign, Target, Loader2, Plus, Trash2, CheckCircle2 } from "lucide-react";
 import { entriesAPI, goalsAPI } from "@/services/api";
+import { toast } from "sonner";
 import type { User } from "@/app/App";
 
 interface RepDashboardViewProps {
@@ -21,6 +25,14 @@ export function RepDashboardView({ user }: RepDashboardViewProps) {
   });
   const [weeklyData, setWeeklyData] = useState<any[]>([]);
   const [goals, setGoals] = useState<any>(null);
+  const [goalsTab, setGoalsTab] = useState<"office" | "personal">("office");
+  const [personalGoals, setPersonalGoals] = useState<any[]>([]);
+  const [showAddGoalForm, setShowAddGoalForm] = useState(false);
+  const [newGoal, setNewGoal] = useState({
+    metric: "sales",
+    target: "",
+    period: "weekly",
+  });
 
   useEffect(() => {
     const loadData = async () => {
@@ -209,52 +221,23 @@ export function RepDashboardView({ user }: RepDashboardViewProps) {
         </Card>
 
         {goals ? (
-          <Card className="p-6 bg-card border-border">
-            <h3 className="text-lg font-semibold text-foreground mb-4">Office Goals</h3>
-            <div className="space-y-4">
-              <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg">
-                <h4 className="text-xs font-semibold text-blue-400 mb-2">Daily Targets</h4>
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <p className="text-xs text-blue-400">Contacts</p>
-                    <p className="text-xl font-bold text-foreground">{goals.dailyContacts}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-blue-400">Sales</p>
-                    <p className="text-xl font-bold text-foreground">{goals.dailySales}</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
-                <h4 className="text-xs font-semibold text-green-400 mb-2">Weekly Targets</h4>
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <p className="text-xs text-green-400">Contacts</p>
-                    <p className="text-xl font-bold text-foreground">{goals.weeklyContacts}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-green-400">Sales</p>
-                    <p className="text-xl font-bold text-foreground">{goals.weeklySales}</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="p-4 bg-purple-500/10 border border-purple-500/20 rounded-lg">
-                <h4 className="text-xs font-semibold text-purple-400 mb-2">Monthly Targets</h4>
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <p className="text-xs text-purple-400">Contacts</p>
-                    <p className="text-xl font-bold text-foreground">{goals.monthlyContacts}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-purple-400">Sales</p>
-                    <p className="text-xl font-bold text-foreground">{goals.monthlySales}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </Card>
+          <GoalsCard
+            goals={goals}
+            goalsTab={goalsTab}
+            setGoalsTab={setGoalsTab}
+            personalGoals={personalGoals}
+            showAddGoalForm={showAddGoalForm}
+            setShowAddGoalForm={setShowAddGoalForm}
+            newGoal={newGoal}
+            setNewGoal={setNewGoal}
+            user={user}
+            onPersonalGoalsUpdate={() => {
+              // Reload personal goals
+              goalsAPI.getGoals(user.officeId).then(res => {
+                setPersonalGoals(Array.isArray(res.goals) ? res.goals : []);
+              });
+            }}
+          />
         ) : (
           <Card className="p-6 bg-card border-border">
             <h3 className="text-lg font-semibold text-foreground mb-4">Performance Summary</h3>
@@ -294,5 +277,280 @@ export function RepDashboardView({ user }: RepDashboardViewProps) {
         </Card>
       )}
     </div>
+  );
+}
+
+// GoalsCard Component with Tabs
+interface GoalsCardProps {
+  goals: any;
+  goalsTab: "office" | "personal";
+  setGoalsTab: (tab: "office" | "personal") => void;
+  personalGoals: any[];
+  showAddGoalForm: boolean;
+  setShowAddGoalForm: (show: boolean) => void;
+  newGoal: { metric: string; target: string; period: string };
+  setNewGoal: (goal: { metric: string; target: string; period: string }) => void;
+  user: User;
+  onPersonalGoalsUpdate: () => void;
+}
+
+function GoalsCard({
+  goals,
+  goalsTab,
+  setGoalsTab,
+  personalGoals,
+  showAddGoalForm,
+  setShowAddGoalForm,
+  newGoal,
+  setNewGoal,
+  user,
+  onPersonalGoalsUpdate,
+}: GoalsCardProps) {
+  const handleAddPersonalGoal = async () => {
+    if (!newGoal.target) {
+      toast.error('Please enter a target value');
+      return;
+    }
+
+    try {
+      await goalsAPI.createGoal({
+        officeId: user.officeId,
+        metric: newGoal.metric,
+        target: parseFloat(newGoal.target),
+        period: newGoal.period,
+      });
+      
+      toast.success('Personal goal added!');
+      setShowAddGoalForm(false);
+      setNewGoal({ metric: "sales", target: "", period: "weekly" });
+      onPersonalGoalsUpdate();
+    } catch (error) {
+      console.error('Failed to add goal:', error);
+      toast.error('Failed to add goal');
+    }
+  };
+
+  const handleDeletePersonalGoal = async (goalId: string) => {
+    try {
+      await goalsAPI.deleteGoal(goalId);
+      toast.success('Goal deleted');
+      onPersonalGoalsUpdate();
+    } catch (error) {
+      console.error('Failed to delete goal:', error);
+      toast.error('Failed to delete goal');
+    }
+  };
+
+  return (
+    <Card className="p-6 bg-card border-border">
+      {/* Tabs */}
+      <div className="flex items-center gap-2 mb-4 border-b border-border">
+        <button
+          onClick={() => setGoalsTab("office")}
+          className={`px-4 py-2 text-sm font-medium transition-colors relative ${
+            goalsTab === "office"
+              ? "text-primary"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          Office Goals
+          {goalsTab === "office" && (
+            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
+          )}
+        </button>
+        <button
+          onClick={() => setGoalsTab("personal")}
+          className={`px-4 py-2 text-sm font-medium transition-colors relative ${
+            goalsTab === "personal"
+              ? "text-primary"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          Personal Goals
+          {goalsTab === "personal" && (
+            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
+          )}
+        </button>
+      </div>
+
+      {/* Office Goals Tab */}
+      {goalsTab === "office" && (
+        <div className="space-y-4">
+          <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+            <h4 className="text-xs font-semibold text-blue-400 mb-2">Daily Targets</h4>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <p className="text-xs text-blue-400">Contacts</p>
+                <p className="text-xl font-bold text-foreground">{goals.dailyContacts}</p>
+              </div>
+              <div>
+                <p className="text-xs text-blue-400">Sales</p>
+                <p className="text-xl font-bold text-foreground">{goals.dailySales}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
+            <h4 className="text-xs font-semibold text-green-400 mb-2">Weekly Targets</h4>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <p className="text-xs text-green-400">Contacts</p>
+                <p className="text-xl font-bold text-foreground">{goals.weeklyContacts}</p>
+              </div>
+              <div>
+                <p className="text-xs text-green-400">Sales</p>
+                <p className="text-xl font-bold text-foreground">{goals.weeklySales}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="p-4 bg-purple-500/10 border border-purple-500/20 rounded-lg">
+            <h4 className="text-xs font-semibold text-purple-400 mb-2">Monthly Targets</h4>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <p className="text-xs text-purple-400">Contacts</p>
+                <p className="text-xl font-bold text-foreground">{goals.monthlyContacts}</p>
+              </div>
+              <div>
+                <p className="text-xs text-purple-400">Sales</p>
+                <p className="text-xl font-bold text-foreground">{goals.monthlySales}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Personal Goals Tab */}
+      {goalsTab === "personal" && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-muted-foreground">Track your own custom goals</p>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setShowAddGoalForm(!showAddGoalForm)}
+            >
+              <Plus className="size-4 mr-1" />
+              Add
+            </Button>
+          </div>
+
+          {/* Add Goal Form */}
+          {showAddGoalForm && (
+            <div className="p-4 bg-secondary/30 border border-border rounded-lg space-y-3">
+              <div>
+                <label className="text-xs text-muted-foreground mb-1 block">Metric</label>
+                <select
+                  value={newGoal.metric}
+                  onChange={(e) => setNewGoal({ ...newGoal, metric: e.target.value })}
+                  className="w-full px-3 py-2 text-sm bg-background border border-border rounded-lg text-foreground"
+                >
+                  <option value="sales">Sales</option>
+                  <option value="contacts">Contacts</option>
+                  <option value="presentations">Presentations</option>
+                  <option value="revenue">Revenue</option>
+                </select>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1 block">Target</label>
+                  <Input
+                    type="number"
+                    value={newGoal.target}
+                    onChange={(e) => setNewGoal({ ...newGoal, target: e.target.value })}
+                    placeholder="100"
+                    className="text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1 block">Period</label>
+                  <select
+                    value={newGoal.period}
+                    onChange={(e) => setNewGoal({ ...newGoal, period: e.target.value })}
+                    className="w-full px-3 py-2 text-sm bg-background border border-border rounded-lg text-foreground"
+                  >
+                    <option value="daily">Daily</option>
+                    <option value="weekly">Weekly</option>
+                    <option value="monthly">Monthly</option>
+                  </select>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Button size="sm" onClick={handleAddPersonalGoal}>Save</Button>
+                <Button size="sm" variant="outline" onClick={() => setShowAddGoalForm(false)}>Cancel</Button>
+              </div>
+            </div>
+          )}
+
+          {/* Personal Goals List */}
+          {personalGoals.length === 0 && !showAddGoalForm ? (
+            <div className="text-center py-8">
+              <Target className="size-10 text-muted-foreground/50 mx-auto mb-2" />
+              <p className="text-sm text-muted-foreground">No personal goals yet</p>
+              <Button
+                size="sm"
+                variant="outline"
+                className="mt-3"
+                onClick={() => setShowAddGoalForm(true)}
+              >
+                <Plus className="size-4 mr-1" />
+                Create Your First Goal
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-2 max-h-64 overflow-y-auto">
+              {personalGoals.map((goal) => {
+                const progress = goal.current && goal.target ? (goal.current / goal.target) * 100 : 0;
+                const isComplete = progress >= 100;
+
+                return (
+                  <div key={goal.id} className="p-3 bg-secondary/30 border border-border rounded-lg">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        {isComplete ? (
+                          <CheckCircle2 className="size-4 text-green-400" />
+                        ) : (
+                          <Target className="size-4 text-primary" />
+                        )}
+                        <span className="text-sm font-medium text-foreground capitalize">
+                          {goal.metric}
+                        </span>
+                        <Badge variant="secondary" className="text-xs">
+                          {goal.period}
+                        </Badge>
+                      </div>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="size-6"
+                        onClick={() => handleDeletePersonalGoal(goal.id)}
+                      >
+                        <Trash2 className="size-3 text-muted-foreground hover:text-destructive" />
+                      </Button>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-xs text-muted-foreground">
+                        <span>Progress</span>
+                        <span className="font-medium text-foreground">
+                          {goal.current || 0} / {goal.target}
+                        </span>
+                      </div>
+                      <div className="w-full bg-secondary rounded-full h-1.5">
+                        <div
+                          className={`h-1.5 rounded-full transition-all ${
+                            isComplete ? 'bg-green-500' : 'bg-primary'
+                          }`}
+                          style={{ width: `${Math.min(progress, 100)}%` }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+    </Card>
   );
 }

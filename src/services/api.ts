@@ -489,6 +489,28 @@ export const usersAPI = {
 };
 
 // ============================================================================
+// OFFICE API
+// ============================================================================
+
+export const officeAPI = {
+  // Update office name (owner only)
+  updateOffice: async (officeId: string, updates: { name: string }) => {
+    const response = await fetch(`${getAPIBase()}/offices/${officeId}`, {
+      method: 'PUT',
+      headers: await getAuthHeaders(),
+      body: JSON.stringify(updates),
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to update office');
+    }
+    
+    return response.json();
+  },
+};
+
+// ============================================================================
 // GOALS API
 // ============================================================================
 

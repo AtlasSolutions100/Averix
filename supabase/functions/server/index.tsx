@@ -1115,6 +1115,61 @@ app.delete("/make-server-45dc47a9/users/:userId", requireAuth, async (c) => {
 });
 
 // ============================================================================
+// OFFICE ENDPOINTS
+// ============================================================================
+
+// Update office (owner only)
+app.put("/make-server-45dc47a9/offices/:officeId", requireAuth, async (c) => {
+  try {
+    const user = c.get('user');
+    const officeId = c.req.param('officeId');
+    const updates = await c.req.json();
+    
+    const supabase = getSupabaseClient();
+    
+    // Get user's profile to verify they're an owner and it's their office
+    const { data: profile, error: profileError } = await supabase
+      .from('user_profiles')
+      .select('role, office_id')
+      .eq('id', user.id)
+      .single();
+    
+    if (profileError || !profile) {
+      console.error('Profile fetch error:', profileError);
+      return c.json({ error: 'User profile not found' }, 404);
+    }
+    
+    if (profile.role !== 'owner') {
+      return c.json({ error: 'Only owners can update office settings' }, 403);
+    }
+    
+    if (profile.office_id !== officeId) {
+      return c.json({ error: 'You can only update your own office' }, 403);
+    }
+    
+    // Update office
+    const { data: office, error: updateError } = await supabase
+      .from('offices')
+      .update({ name: updates.name })
+      .eq('id', officeId)
+      .select()
+      .single();
+    
+    if (updateError) {
+      console.error('Office update error:', updateError);
+      return c.json({ error: updateError.message }, 400);
+    }
+    
+    console.log(`✅ Updated office ${officeId}: ${office.name}`);
+    
+    return c.json(office);
+  } catch (error) {
+    console.error('Update office error:', error);
+    return c.json({ error: 'Internal server error updating office' }, 500);
+  }
+});
+
+// ============================================================================
 // START SERVER
 // ============================================================================
 Deno.serve(app.fetch);

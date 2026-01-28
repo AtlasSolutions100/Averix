@@ -97,8 +97,8 @@ export function LiveTrackerView({ user }: LiveTrackerViewProps) {
   };
 
   // Calculate rates
-  const contactRate = tracker.stops > 0 ? ((tracker.contacts / tracker.stops) * 100).toFixed(1) : "0.0";
-  const presentationRate = tracker.contacts > 0 ? ((tracker.presentations / tracker.contacts) * 100).toFixed(1) : "0.0";
+  const stopRate = tracker.contacts > 0 ? ((tracker.stops / tracker.contacts) * 100).toFixed(1) : "0.0";
+  const presentationRate = tracker.stops > 0 ? ((tracker.presentations / tracker.stops) * 100).toFixed(1) : "0.0";
   const closeRate = tracker.contacts > 0 ? ((tracker.sales / tracker.contacts) * 100).toFixed(1) : "0.0";
 
   const CounterButton = ({ 
@@ -190,8 +190,8 @@ export function LiveTrackerView({ user }: LiveTrackerViewProps) {
       {/* Quick Stats */}
       <div className="grid grid-cols-3 gap-4 p-4 bg-blue-500/10 rounded-lg border border-blue-500/20">
         <div>
-          <p className="text-xs text-blue-400">Contact Rate</p>
-          <p className="text-2xl font-bold text-foreground">{contactRate}%</p>
+          <p className="text-xs text-blue-400">Stop Rate</p>
+          <p className="text-2xl font-bold text-foreground">{stopRate}%</p>
         </div>
         <div>
           <p className="text-xs text-blue-400">Presentation Rate</p>
@@ -205,8 +205,8 @@ export function LiveTrackerView({ user }: LiveTrackerViewProps) {
 
       {/* Counters */}
       <div className="space-y-3">
-        <CounterButton label="1. Stops" value={tracker.stops} field="stops" color="blue" />
-        <CounterButton label="2. Contacts" value={tracker.contacts} field="contacts" color="blue" />
+        <CounterButton label="1. Contacts" value={tracker.contacts} field="contacts" color="blue" />
+        <CounterButton label="2. Stops" value={tracker.stops} field="stops" color="blue" />
         <CounterButton label="3. Presentations" value={tracker.presentations} field="presentations" color="green" />
         <CounterButton label="4. Address Checks" value={tracker.addressChecks} field="addressChecks" color="purple" />
         <CounterButton label="5. Credit Checks" value={tracker.creditChecks} field="creditChecks" color="purple" />

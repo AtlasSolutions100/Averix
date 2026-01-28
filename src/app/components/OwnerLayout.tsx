@@ -1,5 +1,5 @@
 import { ReactNode, useState } from "react";
-import { LogOut, LayoutDashboard, Users, Store, Target, TrendingUp, Settings, Grid, Bell, UsersRound } from "lucide-react";
+import { LogOut, LayoutDashboard, Users, Store, Target, TrendingUp, Settings, Grid, Bell, UsersRound, Building2, ClipboardList } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
 import { VeridexLogo } from "@/app/components/VeridexLogo";
 import { User } from "@/app/App";
@@ -9,13 +9,16 @@ import { StoresView } from "@/app/components/StoresView";
 import { LOAAnalyzerView } from "@/app/components/LOAAnalyzerView";
 import { GoalsView } from "@/app/components/GoalsView";
 import { TeamManagement } from "@/app/components/TeamManagement";
+import { StoreManagementView } from "@/app/components/StoreManagementView";
+import { OfficeSettingsView } from "@/app/components/OfficeSettingsView";
+import { EntriesView } from "@/app/components/EntriesView";
 
 interface OwnerLayoutProps {
   user: User;
   onLogout: () => void;
 }
 
-type ViewType = "dashboard" | "reps" | "stores" | "loa" | "goals" | "team" | "admin";
+type ViewType = "dashboard" | "reps" | "stores" | "loa" | "goals" | "team" | "storeManagement" | "officeSettings" | "entries";
 
 export function OwnerLayout({ user, onLogout }: OwnerLayoutProps) {
   const [currentView, setCurrentView] = useState<ViewType>("dashboard");
@@ -23,17 +26,18 @@ export function OwnerLayout({ user, onLogout }: OwnerLayoutProps) {
   const menuItems = [
     { id: "dashboard" as ViewType, label: "Dashboard", icon: LayoutDashboard },
     { id: "reps" as ViewType, label: "Reps", icon: Users },
-    { id: "stores" as ViewType, label: "Stores", icon: Store },
+    { id: "storeManagement" as ViewType, label: "Stores", icon: Store },
     { id: "loa" as ViewType, label: "LOA Analyzer", icon: TrendingUp },
     { id: "goals" as ViewType, label: "Goals", icon: Target },
-    { id: "team" as ViewType, label: "Team Management", icon: UsersRound },
-    { id: "admin" as ViewType, label: "Admin", icon: Settings },
+    { id: "team" as ViewType, label: "Team", icon: UsersRound },
+    { id: "officeSettings" as ViewType, label: "Settings", icon: Settings },
+    { id: "entries" as ViewType, label: "Entries", icon: ClipboardList },
   ];
 
   return (
     <div className="flex h-screen bg-background">
       {/* Sidebar */}
-      <div className="w-52 bg-card border-r border-border text-foreground flex flex-col">
+      <div className="w-64 bg-card border-r border-border text-foreground flex flex-col">
         {/* Logo */}
         <div className="p-6 flex items-center gap-3">
           <VeridexLogo />
@@ -100,10 +104,12 @@ export function OwnerLayout({ user, onLogout }: OwnerLayoutProps) {
             <p className="text-sm text-muted-foreground mt-0.5">
               {currentView === "dashboard" && "Office-wide performance clarity"}
               {currentView === "reps" && "Volume vs efficiency — who scales, who doesn't"}
-              {currentView === "stores" && "Which retail locations actually convert"}
+              {currentView === "storeManagement" && "Manage retail locations and performance tracking"}
               {currentView === "loa" && "Math-based coaching instead of 'try harder'"}
               {currentView === "goals" && "Set and track your goals"}
-              {currentView === "team" && "Manage your team"}
+              {currentView === "team" && "Create and manage team member accounts"}
+              {currentView === "officeSettings" && "Configure your office and preferences"}
+              {currentView === "entries" && "Review all daily performance submissions"}
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -120,15 +126,12 @@ export function OwnerLayout({ user, onLogout }: OwnerLayoutProps) {
         <div className="flex-1 overflow-auto">
           {currentView === "dashboard" && <OwnerDashboardView user={user} />}
           {currentView === "reps" && <RepsView user={user} />}
-          {currentView === "stores" && <StoresView user={user} />}
+          {currentView === "storeManagement" && <StoreManagementView user={user} />}
           {currentView === "loa" && <LOAAnalyzerView user={user} />}
           {currentView === "goals" && <GoalsView user={user} />}
           {currentView === "team" && <TeamManagement user={user} />}
-          {currentView === "admin" && (
-            <div className="flex items-center justify-center h-full">
-              <p className="text-gray-500">Admin settings coming soon</p>
-            </div>
-          )}
+          {currentView === "officeSettings" && <OfficeSettingsView user={user} />}
+          {currentView === "entries" && <EntriesView user={user} />}
         </div>
       </div>
     </div>

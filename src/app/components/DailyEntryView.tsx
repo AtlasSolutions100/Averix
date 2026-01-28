@@ -22,8 +22,8 @@ export function DailyEntryView({ user }: DailyEntryViewProps) {
   const { tracker, selectedStore, setSelectedStore } = useTracker();
   
   // LOA Metrics - auto-populated from tracker
-  const [stops, setStops] = useState("");
   const [contacts, setContacts] = useState("");
+  const [stops, setStops] = useState("");
   const [presentations, setPresentations] = useState("");
   const [addressChecks, setAddressChecks] = useState("");
   const [creditChecks, setCreditChecks] = useState("");
@@ -37,8 +37,8 @@ export function DailyEntryView({ user }: DailyEntryViewProps) {
 
   // Auto-populate from tracker whenever tracker changes
   useEffect(() => {
-    setStops(tracker.stops > 0 ? tracker.stops.toString() : "");
     setContacts(tracker.contacts > 0 ? tracker.contacts.toString() : "");
+    setStops(tracker.stops > 0 ? tracker.stops.toString() : "");
     setPresentations(tracker.presentations > 0 ? tracker.presentations.toString() : "");
     setAddressChecks(tracker.addressChecks > 0 ? tracker.addressChecks.toString() : "");
     setCreditChecks(tracker.creditChecks > 0 ? tracker.creditChecks.toString() : "");
@@ -65,8 +65,8 @@ export function DailyEntryView({ user }: DailyEntryViewProps) {
   }, []);
 
   // Calculate conversion rates
-  const contactRate = stops && contacts ? ((parseInt(contacts) / parseInt(stops)) * 100).toFixed(1) : "0.0";
-  const presentationRate = contacts && presentations ? ((parseInt(presentations) / parseInt(contacts)) * 100).toFixed(1) : "0.0";
+  const stopRate = contacts && stops ? ((parseInt(stops) / parseInt(contacts)) * 100).toFixed(1) : "0.0";
+  const presentationRate = stops && presentations ? ((parseInt(presentations) / parseInt(stops)) * 100).toFixed(1) : "0.0";
   const addressCheckRate = presentations && addressChecks ? ((parseInt(addressChecks) / parseInt(presentations)) * 100).toFixed(1) : "0.0";
   const creditCheckRate = addressChecks && creditChecks ? ((parseInt(creditChecks) / parseInt(addressChecks)) * 100).toFixed(1) : "0.0";
   const closeRate = creditChecks && sales ? ((parseInt(sales) / parseInt(creditChecks)) * 100).toFixed(1) : "0.0";
@@ -187,20 +187,7 @@ export function DailyEntryView({ user }: DailyEntryViewProps) {
           <h3 className="font-semibold text-lg mb-4 text-foreground">Law of Averages</h3>
           <div className="space-y-4">
             <div>
-              <Label htmlFor="stops" className="text-foreground">1. Total Stops</Label>
-              <Input
-                id="stops"
-                type="number"
-                placeholder="0"
-                value={stops}
-                onChange={(e) => setStops(e.target.value)}
-                className="mt-1 text-lg bg-input-background border-border text-foreground"
-              />
-              <p className="text-xs text-muted-foreground mt-1">How many people did you approach?</p>
-            </div>
-
-            <div>
-              <Label htmlFor="contacts" className="text-foreground">2. Contacts (Stopped to Talk)</Label>
+              <Label htmlFor="contacts" className="text-foreground">1. Contacts</Label>
               <Input
                 id="contacts"
                 type="number"
@@ -209,7 +196,20 @@ export function DailyEntryView({ user }: DailyEntryViewProps) {
                 onChange={(e) => setContacts(e.target.value)}
                 className="mt-1 text-lg bg-input-background border-border text-foreground"
               />
-              <p className="text-xs text-muted-foreground mt-1">How many stopped and engaged?</p>
+              <p className="text-xs text-muted-foreground mt-1">How many people did you engage with?</p>
+            </div>
+
+            <div>
+              <Label htmlFor="stops" className="text-foreground">2. Stops (Stopped to Talk)</Label>
+              <Input
+                id="stops"
+                type="number"
+                placeholder="0"
+                value={stops}
+                onChange={(e) => setStops(e.target.value)}
+                className="mt-1 text-lg bg-input-background border-border text-foreground"
+              />
+              <p className="text-xs text-muted-foreground mt-1">How many stopped and listened?</p>
             </div>
 
             <div>
@@ -304,8 +304,8 @@ export function DailyEntryView({ user }: DailyEntryViewProps) {
             <h4 className="font-semibold text-sm text-blue-400 mb-3">Auto-Calculated Metrics</h4>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <p className="text-xs text-blue-400">Contact Rate</p>
-                <p className="text-lg font-semibold text-foreground">{contactRate}%</p>
+                <p className="text-xs text-blue-400">Stop Rate</p>
+                <p className="text-lg font-semibold text-foreground">{stopRate}%</p>
               </div>
               <div>
                 <p className="text-xs text-blue-400">Presentation Rate</p>
