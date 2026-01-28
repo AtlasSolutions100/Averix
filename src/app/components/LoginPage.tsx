@@ -6,6 +6,7 @@ import { Label } from "@/app/components/ui/label";
 import { toast } from "sonner";
 import { authAPI } from "@/services/api";
 import type { User } from "@/app/App";
+import { VeridexLogo } from "@/app/components/VeridexLogo";
 
 interface LoginPageProps {
   onLogin: (user: User) => void;
@@ -86,15 +87,12 @@ export function LoginPage({ onLogin }: LoginPageProps) {
       <div className="w-full max-w-md">
         {/* Logo & Branding */}
         <div className="text-center mb-8">
-          <div className="relative w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <div className="absolute inset-0 bg-gradient-to-br from-primary to-purple-600 rounded-2xl blur-lg opacity-50"></div>
-            <div className="relative w-16 h-16 bg-gradient-to-br from-primary to-purple-600 rounded-2xl flex items-center justify-center">
-              <span className="text-3xl font-bold text-white">A</span>
-            </div>
+          <div className="flex items-center justify-center mb-6">
+            <VeridexLogo className="w-32 h-32" />
           </div>
-          <h1 className="text-4xl font-bold text-foreground mb-2">Averix</h1>
-          <p className="text-lg text-muted-foreground font-medium">Turn Hustle Into Math</p>
-          <p className="text-sm text-muted-foreground mt-1">Scale What Actually Works</p>
+          <h1 className="text-4xl font-bold text-foreground mb-2">Veridex</h1>
+          <p className="text-lg text-muted-foreground font-medium">Scale what actually matters</p>
+          <p className="text-sm text-muted-foreground mt-1">Turn Hustle Into Data</p>
         </div>
 
         {/* Login Card */}

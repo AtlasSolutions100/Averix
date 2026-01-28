@@ -1,29 +1,32 @@
 import { useState } from "react";
-import { Home, TrendingUp, Calendar, LogOut, Menu, X, Activity } from "lucide-react";
+import { LogOut, BarChart3, Store, Target, History, Menu, X } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
-import { RepDashboardView } from "@/app/components/RepDashboardView";
-import { DailyEntryView } from "@/app/components/DailyEntryView";
-import { RepHistoryView } from "@/app/components/RepHistoryView";
 import { LiveTrackerView } from "@/app/components/LiveTrackerView";
+import { RepDashboardView } from "@/app/components/RepDashboardView";
+import { StoresView } from "@/app/components/StoresView";
+import { GoalsView } from "@/app/components/GoalsView";
+import { RepHistoryView } from "@/app/components/RepHistoryView";
 import { TrackerProvider } from "@/contexts/TrackerContext";
 import type { User } from "@/app/App";
+import { VeridexLogo } from "@/app/components/VeridexLogo";
 
 interface RepLayoutProps {
   user: User;
   onLogout: () => void;
 }
 
-type ViewType = "dashboard" | "tracker" | "entry" | "history";
+type ViewType = "dashboard" | "tracker" | "stores" | "goals" | "history";
 
 export function RepLayout({ user, onLogout }: RepLayoutProps) {
   const [currentView, setCurrentView] = useState<ViewType>("tracker");
   const [menuOpen, setMenuOpen] = useState(false);
 
   const menuItems = [
-    { id: "dashboard" as ViewType, label: "Dashboard", icon: Home },
-    { id: "tracker" as ViewType, label: "Live Tracker", icon: Activity },
-    { id: "entry" as ViewType, label: "Daily Entry", icon: Calendar },
-    { id: "history" as ViewType, label: "My Performance", icon: TrendingUp },
+    { id: "dashboard" as ViewType, label: "Dashboard", icon: BarChart3 },
+    { id: "tracker" as ViewType, label: "Live Tracker", icon: Target },
+    { id: "stores" as ViewType, label: "My Stores", icon: Store },
+    { id: "goals" as ViewType, label: "My Goals", icon: Target },
+    { id: "history" as ViewType, label: "My Performance", icon: History },
   ];
 
   return (
@@ -32,10 +35,8 @@ export function RepLayout({ user, onLogout }: RepLayoutProps) {
         {/* Mobile Header */}
         <div className="bg-card border-b border-border text-foreground px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-primary to-purple-600 rounded-lg flex items-center justify-center font-bold text-white shadow-lg shadow-primary/20">
-              A
-            </div>
-            <span className="text-lg font-semibold">Averix</span>
+            <VeridexLogo className="w-8 h-8" />
+            <span className="text-lg font-semibold">Veridex</span>
           </div>
           <Button
             variant="ghost"
@@ -88,13 +89,10 @@ export function RepLayout({ user, onLogout }: RepLayoutProps) {
           <div className="hidden lg:flex w-64 bg-card border-r border-border flex-col">
             <div className="p-6">
               <div className="flex items-center gap-3 mb-6">
-                <div className="w-12 h-12 bg-gradient-to-br from-primary to-purple-600 rounded-full flex items-center justify-center shadow-lg shadow-primary/20">
-                  <span className="text-sm font-semibold text-white">{user.avatar || user.name.slice(0, 2).toUpperCase()}</span>
+                <div className="w-8 h-8">
+                  <VeridexLogo className="w-full h-full" />
                 </div>
-                <div>
-                  <p className="font-semibold text-foreground">{user.name}</p>
-                  <p className="text-xs text-muted-foreground">Sales Rep</p>
-                </div>
+                <span className="text-lg font-semibold">Veridex</span>
               </div>
             </div>
 
@@ -137,7 +135,8 @@ export function RepLayout({ user, onLogout }: RepLayoutProps) {
           <div className="flex-1 overflow-auto">
             {currentView === "dashboard" && <RepDashboardView user={user} />}
             {currentView === "tracker" && <LiveTrackerView user={user} />}
-            {currentView === "entry" && <DailyEntryView user={user} />}
+            {currentView === "stores" && <StoresView user={user} />}
+            {currentView === "goals" && <GoalsView user={user} />}
             {currentView === "history" && <RepHistoryView user={user} />}
           </div>
         </div>

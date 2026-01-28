@@ -38,15 +38,18 @@ const getSupabaseClient = () => {
     }
     
     const supabaseUrl = `https://${projectId}.supabase.co`;
-    supabaseClient = createClient(supabaseUrl, publicAnonKey, {
-      auth: {
-        persistSession: true,
-        autoRefreshToken: true,
-        detectSessionInUrl: true,
-        storage: window.localStorage,
-        storageKey: 'averix-auth-token',
-      },
-    });
+    supabaseClient = createClient(
+      supabaseUrl,
+      publicAnonKey,
+      {
+        auth: {
+          autoRefreshToken: true,
+          persistSession: true,
+          detectSessionInUrl: true,
+          storage: window.localStorage,
+          storageKey: 'veridex-auth-token',
+        },
+      });
   }
   return supabaseClient;
 };

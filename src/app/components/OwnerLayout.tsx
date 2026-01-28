@@ -1,19 +1,20 @@
-import { useState } from "react";
-import { LayoutDashboard, Users, Store, BarChart3, FileText, Settings, LogOut, Bell, Grid } from "lucide-react";
+import { ReactNode, useState } from "react";
+import { LogOut, LayoutDashboard, Users, Store, Target, TrendingUp, Settings, Grid, Bell } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
+import { VeridexLogo } from "@/app/components/VeridexLogo";
+import { User } from "@/app/App";
 import { OwnerDashboardView } from "@/app/components/OwnerDashboardView";
 import { RepsView } from "@/app/components/RepsView";
 import { StoresView } from "@/app/components/StoresView";
 import { LOAAnalyzerView } from "@/app/components/LOAAnalyzerView";
-import { ReportsView } from "@/app/components/ReportsView";
-import type { User } from "@/app/App";
+import { GoalsView } from "@/app/components/GoalsView";
 
 interface OwnerLayoutProps {
   user: User;
   onLogout: () => void;
 }
 
-type ViewType = "dashboard" | "reps" | "stores" | "loa" | "reports" | "admin";
+type ViewType = "dashboard" | "reps" | "stores" | "loa" | "goals" | "admin";
 
 export function OwnerLayout({ user, onLogout }: OwnerLayoutProps) {
   const [currentView, setCurrentView] = useState<ViewType>("dashboard");
@@ -22,8 +23,8 @@ export function OwnerLayout({ user, onLogout }: OwnerLayoutProps) {
     { id: "dashboard" as ViewType, label: "Dashboard", icon: LayoutDashboard },
     { id: "reps" as ViewType, label: "Reps", icon: Users },
     { id: "stores" as ViewType, label: "Stores", icon: Store },
-    { id: "loa" as ViewType, label: "LOA Analyzer", icon: BarChart3 },
-    { id: "reports" as ViewType, label: "Reports", icon: FileText },
+    { id: "loa" as ViewType, label: "LOA Analyzer", icon: TrendingUp },
+    { id: "goals" as ViewType, label: "Goals", icon: Target },
     { id: "admin" as ViewType, label: "Admin", icon: Settings },
   ];
 
@@ -32,11 +33,9 @@ export function OwnerLayout({ user, onLogout }: OwnerLayoutProps) {
       {/* Sidebar */}
       <div className="w-52 bg-card border-r border-border text-foreground flex flex-col">
         {/* Logo */}
-        <div className="p-6 flex items-center gap-2">
-          <div className="w-8 h-8 bg-gradient-to-br from-primary to-purple-600 rounded-lg flex items-center justify-center font-bold text-white shadow-lg shadow-primary/20">
-            A
-          </div>
-          <span className="text-xl font-semibold">Averix</span>
+        <div className="p-6 flex items-center gap-3">
+          <VeridexLogo />
+          <span className="text-xl font-semibold">Veridex</span>
         </div>
 
         {/* Navigation */}
@@ -101,7 +100,7 @@ export function OwnerLayout({ user, onLogout }: OwnerLayoutProps) {
               {currentView === "reps" && "Volume vs efficiency — who scales, who doesn't"}
               {currentView === "stores" && "Which retail locations actually convert"}
               {currentView === "loa" && "Math-based coaching instead of 'try harder'"}
-              {currentView === "reports" && "See growth, stagnation, and ramp curves"}
+              {currentView === "goals" && "Set and track your goals"}
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -120,7 +119,7 @@ export function OwnerLayout({ user, onLogout }: OwnerLayoutProps) {
           {currentView === "reps" && <RepsView user={user} />}
           {currentView === "stores" && <StoresView user={user} />}
           {currentView === "loa" && <LOAAnalyzerView user={user} />}
-          {currentView === "reports" && <ReportsView user={user} />}
+          {currentView === "goals" && <GoalsView user={user} />}
           {currentView === "admin" && (
             <div className="flex items-center justify-center h-full">
               <p className="text-gray-500">Admin settings coming soon</p>

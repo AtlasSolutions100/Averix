@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Card } from "@/app/components/ui/card";
+import { Button } from "@/app/components/ui/button";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { TrendingUp, TrendingDown, Users, Store, DollarSign, Target, Activity, Zap, Loader2 } from "lucide-react";
 import { analyticsAPI } from "@/services/api";
@@ -9,8 +10,11 @@ interface OwnerDashboardViewProps {
   user: User;
 }
 
+type TimeFilter = "week" | "month" | "quarter";
+
 export function OwnerDashboardView({ user }: OwnerDashboardViewProps) {
   const [loading, setLoading] = useState(true);
+  const [timeFilter, setTimeFilter] = useState<TimeFilter>("month");
   const [metrics, setMetrics] = useState<any>(null);
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
 
@@ -22,11 +26,19 @@ export function OwnerDashboardView({ user }: OwnerDashboardViewProps) {
         return;
       }
       
+      setLoading(true);
       try {
-        // Get last 30 days
         const endDate = new Date();
         const startDate = new Date();
-        startDate.setDate(startDate.getDate() - 30);
+        
+        // Calculate start date based on filter
+        if (timeFilter === "week") {
+          startDate.setDate(startDate.getDate() - 7);
+        } else if (timeFilter === "month") {
+          startDate.setDate(startDate.getDate() - 30);
+        } else {
+          startDate.setMonth(startDate.getMonth() - 3);
+        }
 
         const [analyticsData, leaderboardData] = await Promise.all([
           analyticsAPI.getOfficeAnalytics(user.officeId, {
@@ -49,7 +61,7 @@ export function OwnerDashboardView({ user }: OwnerDashboardViewProps) {
     };
 
     loadData();
-  }, [user.officeId]);
+  }, [user.officeId, timeFilter]);
 
   if (loading) {
     return (
@@ -94,9 +106,38 @@ export function OwnerDashboardView({ user }: OwnerDashboardViewProps) {
 
   return (
     <div className="p-6 space-y-6">
-      <div>
-        <h2 className="text-2xl font-semibold text-foreground mb-1">Office Dashboard</h2>
-        <p className="text-muted-foreground">Last 30 days performance overview</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-semibold text-foreground mb-1">Office Dashboard</h2>
+          <p className="text-muted-foreground">
+            {timeFilter === "week" ? "Last 7 days" : timeFilter === "month" ? "Last 30 days" : "Last 3 months"} performance overview
+          </p>
+        </div>
+        
+        {/* Time Filter Buttons */}
+        <div className="flex gap-2">
+          <Button
+            size="sm"
+            variant={timeFilter === "week" ? "default" : "outline"}
+            onClick={() => setTimeFilter("week")}
+          >
+            7 Days
+          </Button>
+          <Button
+            size="sm"
+            variant={timeFilter === "month" ? "default" : "outline"}
+            onClick={() => setTimeFilter("month")}
+          >
+            30 Days
+          </Button>
+          <Button
+            size="sm"
+            variant={timeFilter === "quarter" ? "default" : "outline"}
+            onClick={() => setTimeFilter("quarter")}
+          >
+            3 Months
+          </Button>
+        </div>
       </div>
 
       {/* Top Stats - 6 across */}

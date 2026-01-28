@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Card } from "@/app/components/ui/card";
+import { Button } from "@/app/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/app/components/ui/table";
 import { Badge } from "@/app/components/ui/badge";
 import { TrendingUp, Users, Loader2 } from "lucide-react";
@@ -11,8 +12,11 @@ interface RepsViewProps {
   user: User;
 }
 
+type TimeFilter = "week" | "month" | "quarter";
+
 export function RepsView({ user }: RepsViewProps) {
   const [loading, setLoading] = useState(true);
+  const [timeFilter, setTimeFilter] = useState<TimeFilter>("month");
   const [reps, setReps] = useState<any[]>([]);
   const [chartData, setChartData] = useState<any[]>([]);
 
@@ -20,14 +24,22 @@ export function RepsView({ user }: RepsViewProps) {
     const loadData = async () => {
       if (!user?.officeId) return;
       
+      setLoading(true);
       try {
         // Get reps for this office
         const { users: officeUsers } = await usersAPI.getUsers({ officeId: user.officeId });
         
-        // Get performance data for last 30 days
         const endDate = new Date();
         const startDate = new Date();
-        startDate.setMonth(startDate.getMonth() - 1);
+        
+        // Calculate start date based on filter
+        if (timeFilter === "week") {
+          startDate.setDate(startDate.getDate() - 7);
+        } else if (timeFilter === "month") {
+          startDate.setMonth(startDate.getMonth() - 1);
+        } else {
+          startDate.setMonth(startDate.getMonth() - 3);
+        }
 
         const { leaderboard } = await analyticsAPI.getLeaderboard(user.officeId, {
           startDate: startDate.toISOString().split('T')[0],
@@ -52,7 +64,7 @@ export function RepsView({ user }: RepsViewProps) {
     };
 
     loadData();
-  }, [user?.officeId]);
+  }, [user?.officeId, timeFilter]);
 
   if (loading) {
     return (
@@ -78,9 +90,38 @@ export function RepsView({ user }: RepsViewProps) {
     <div className="h-full flex flex-col bg-background">
       {/* Content */}
       <div className="flex-1 overflow-auto p-6 space-y-6">
-        <div>
-          <h2 className="text-2xl font-semibold text-foreground">Rep Performance</h2>
-          <p className="text-muted-foreground">Last 30 days overview</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-semibold text-foreground">Rep Performance</h2>
+            <p className="text-muted-foreground">
+              {timeFilter === "week" ? "Last 7 days" : timeFilter === "month" ? "Last 30 days" : "Last 3 months"} overview
+            </p>
+          </div>
+          
+          {/* Time Filter Buttons */}
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              variant={timeFilter === "week" ? "default" : "outline"}
+              onClick={() => setTimeFilter("week")}
+            >
+              7 Days
+            </Button>
+            <Button
+              size="sm"
+              variant={timeFilter === "month" ? "default" : "outline"}
+              onClick={() => setTimeFilter("month")}
+            >
+              30 Days
+            </Button>
+            <Button
+              size="sm"
+              variant={timeFilter === "quarter" ? "default" : "outline"}
+              onClick={() => setTimeFilter("quarter")}
+            >
+              3 Months
+            </Button>
+          </div>
         </div>
 
         {/* Summary Cards */}

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Card } from "@/app/components/ui/card";
+import { Button } from "@/app/components/ui/button";
 import { Badge } from "@/app/components/ui/badge";
 import { Loader2, TrendingUp, TrendingDown, Store } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts";
@@ -10,10 +11,13 @@ interface StorePerformanceViewProps {
   user: User;
 }
 
+type TimeFilter = "week" | "month" | "quarter";
+
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
 export function StorePerformanceView({ user }: StorePerformanceViewProps) {
   const [loading, setLoading] = useState(true);
+  const [timeFilter, setTimeFilter] = useState<TimeFilter>("month");
   const [storeStats, setStoreStats] = useState<any[]>([]);
   const [chartData, setChartData] = useState<any[]>([]);
 
@@ -21,10 +25,19 @@ export function StorePerformanceView({ user }: StorePerformanceViewProps) {
     const loadData = async () => {
       if (!user?.officeId) return;
       
+      setLoading(true);
       try {
         const endDate = new Date();
         const startDate = new Date();
-        startDate.setMonth(startDate.getMonth() - 1);
+        
+        // Calculate start date based on filter
+        if (timeFilter === "week") {
+          startDate.setDate(startDate.getDate() - 7);
+        } else if (timeFilter === "month") {
+          startDate.setMonth(startDate.getMonth() - 1);
+        } else {
+          startDate.setMonth(startDate.getMonth() - 3);
+        }
 
         const { storePerformance } = await analyticsAPI.getStorePerformance(user.officeId, {
           startDate: startDate.toISOString().split('T')[0],
@@ -48,7 +61,7 @@ export function StorePerformanceView({ user }: StorePerformanceViewProps) {
     };
 
     loadData();
-  }, [user?.officeId]);
+  }, [user?.officeId, timeFilter]);
 
   if (loading) {
     return (
