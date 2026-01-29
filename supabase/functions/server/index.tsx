@@ -718,11 +718,23 @@ app.get("/make-server-45dc47a9/analytics/store-performance/:officeId", requireAu
 app.get("/make-server-45dc47a9/goals/:officeId", requireAuth, async (c) => {
   try {
     const officeId = c.req.param('officeId');
-    const goals = await kvStore.get(`goals_array:${officeId}`);
     
-    return c.json({ 
-      goals: goals || []
-    });
+    // Get both array-based goals AND LOA object goals
+    const arrayGoals = await kvStore.get(`goals_array:${officeId}`);
+    const loaObject = await kvStore.get(`goals_loa_object:${officeId}`);
+    
+    console.log('📊 GET /goals - Array goals count:', Array.isArray(arrayGoals) ? arrayGoals.length : 0);
+    console.log('📊 GET /goals - Has LOA object:', !!loaObject);
+    
+    // ALWAYS return the array goals (which includes personal + office goals from Goals view)
+    // But ALSO include the LOA object separately for backward compatibility
+    const response = {
+      goals: arrayGoals || [],
+      loaTargets: loaObject || null, // Daily/weekly/monthly targets from LOA Analyzer
+    };
+    
+    console.log('✅ Returning both array goals and LOA targets');
+    return c.json(response);
   } catch (error) {
     console.error('Get goals error:', error);
     return c.json({ error: 'Internal server error' }, 500);
@@ -747,11 +759,41 @@ app.put("/make-server-45dc47a9/goals/:officeId", requireAuth, async (c) => {
       return c.json({ error: 'Only owners can set goals' }, 403);
     }
     
-    const goals = await c.req.json();
-    // FIX: Use goals_array key to match GET endpoint
-    await kvStore.set(`goals_array:${officeId}`, goals);
+    const incomingGoals = await c.req.json();
     
-    return c.json({ success: true, goals });
+    console.log('📝 PUT /goals - Incoming data type:', Array.isArray(incomingGoals) ? 'array' : 'object');
+    
+    // Get existing goals to check what's already there
+    const existingData = await kvStore.get(`goals_array:${officeId}`);
+    console.log('📝 PUT /goals - Existing data type:', Array.isArray(existingData) ? 'array' : 'object');
+    
+    // SMART MERGE LOGIC:
+    // If incoming is an OBJECT (from LOA Analyzer), we need to preserve any array-based goals
+    if (!Array.isArray(incomingGoals) && typeof incomingGoals === 'object') {
+      console.log('⚠️ LOA Analyzer saving object-based goals - preserving array goals if they exist');
+      
+      // If existing data is an array (has new-style goals), preserve those array goals
+      if (Array.isArray(existingData) && existingData.length > 0) {
+        console.log('✅ Found existing array goals, preserving them alongside LOA object');
+        // Save both: the object for LOA Analyzer AND the array goals
+        // We'll store the LOA object with a special key
+        await kvStore.set(`goals_loa_object:${officeId}`, incomingGoals);
+        // Keep the array goals untouched
+        console.log('✅ Preserved', existingData.length, 'array-based goals');
+        return c.json({ success: true, goals: incomingGoals });
+      } else {
+        // No array goals exist, just save the object
+        console.log('📌 No array goals to preserve, saving LOA object only');
+        await kvStore.set(`goals_loa_object:${officeId}`, incomingGoals);
+        await kvStore.set(`goals_array:${officeId}`, []);
+        return c.json({ success: true, goals: incomingGoals });
+      }
+    } else {
+      // Incoming is an array (from Goals view), save it normally
+      console.log('✅ Saving array-based goals from Goals view');
+      await kvStore.set(`goals_array:${officeId}`, incomingGoals);
+      return c.json({ success: true, goals: incomingGoals });
+    }
   } catch (error) {
     console.error('Update goals error:', error);
     return c.json({ error: 'Internal server error' }, 500);
@@ -848,10 +890,16 @@ app.delete("/make-server-45dc47a9/goals/:goalId", requireAuth, async (c) => {
     }
     
     // Permission check:
-    // - Owners can delete any goal in their office
-    // - Reps can only delete their own personal goals
+    // - Owners can delete office-wide goals (userId: null) only, not rep personal goals
+    // - Reps can only delete their own personal goals (userId: their ID)
     const isOwner = profile.role === 'owner' || profile.role === 'cydcor';
     const isOwnGoal = goalToDelete.userId === user.id;
+    const isOfficeGoal = !goalToDelete.userId; // Office-wide goals have userId: null
+    
+    if (isOwner && !isOfficeGoal) {
+      console.error('❌ Permission denied - owner trying to delete a rep personal goal');
+      return c.json({ error: 'Owners can only delete office-wide goals, not rep personal goals' }, 403);
+    }
     
     if (!isOwner && !isOwnGoal) {
       console.error('❌ Permission denied - rep trying to delete someone else\'s goal');

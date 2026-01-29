@@ -33,7 +33,13 @@ export function GoalsView({ user }: GoalsViewProps) {
     try {
       const { goals: goalsData } = await goalsAPI.getGoals(user.officeId);
       // Ensure goals is always an array
-      setGoals(Array.isArray(goalsData) ? goalsData : []);
+      const allGoals = Array.isArray(goalsData) ? goalsData : [];
+      
+      // Filter to only show office-wide goals (not personal rep goals)
+      // Office-wide goals have userId: null, personal goals have userId: <rep-id>
+      const officeGoals = allGoals.filter((goal: any) => !goal.userId);
+      
+      setGoals(officeGoals);
     } catch (error) {
       console.error('Failed to load goals:', error);
       toast.error('Failed to load goals');

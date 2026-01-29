@@ -53,22 +53,24 @@ export function RepDashboardView({ user }: RepDashboardViewProps) {
 
         const { entries } = entriesRes;
         
-        // Handle both old object structure and new array structure for goals
-        const rawGoals = goalsRes?.goals || goalsRes;
+        // Handle the new response format with both array goals and loaTargets
+        const arrayGoals = goalsRes?.goals || [];
+        const loaTargets = goalsRes?.loaTargets || null;
         
-        // If rawGoals is an object (old structure from LOA Analyzer), treat it as office-wide goals
-        if (rawGoals && !Array.isArray(rawGoals) && typeof rawGoals === 'object') {
-          setGoals(rawGoals); // Old structure: single object with dailyContacts, weeklySales, etc.
-          setPersonalGoals([]); // No personal goals in old structure
-        } else {
-          // New structure: array of goal objects
-          const allGoals = Array.isArray(rawGoals) ? rawGoals : [];
-          const officeGoals = allGoals.filter((g: any) => !g.userId); // Goals without userId are office-wide
-          const myPersonalGoals = allGoals.filter((g: any) => g.userId === user.id); // Goals with my userId
-          
-          setGoals(officeGoals);
-          setPersonalGoals(myPersonalGoals);
-        }
+        console.log('🔍 RepDashboard - Array goals:', arrayGoals);
+        console.log('🔍 RepDashboard - LOA targets:', loaTargets);
+        console.log('🔍 RepDashboard - User ID:', user.id);
+        
+        // Filter array goals
+        const officeGoals = Array.isArray(arrayGoals) ? arrayGoals.filter((g: any) => !g.userId) : [];
+        const myPersonalGoals = Array.isArray(arrayGoals) ? arrayGoals.filter((g: any) => g.userId === user.id) : [];
+        
+        console.log('✅ Office goals (userId=null):', officeGoals);
+        console.log('✅ Personal goals (userId=' + user.id + '):', myPersonalGoals);
+        
+        // Set goals: use LOA targets if they exist (for office goals tab), otherwise use array office goals
+        setGoals(loaTargets || officeGoals);
+        setPersonalGoals(myPersonalGoals);
 
         if (entries && entries.length > 0) {
           // Calculate totals
