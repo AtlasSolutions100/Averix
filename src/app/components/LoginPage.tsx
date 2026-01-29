@@ -211,7 +211,7 @@ export function LoginPage({ onLogin, onSwitchToSignup }: LoginPageProps) {
 
         {/* Footer */}
         <p className="text-center text-sm text-muted-foreground mt-6">
-          Built for Cydcor owners and retail sales teams
+          Built for Fuerza Concepts
         </p>
       </div>
     </div>
