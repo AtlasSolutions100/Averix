@@ -5,6 +5,7 @@ import { Label } from "@/app/components/ui/label";
 import { Card } from "@/app/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/app/components/ui/radio-group";
 import { VeridexLogo } from "@/app/components/VeridexLogo";
+import { OwnerPasscodeModal } from "@/app/components/OwnerPasscodeModal";
 import { ArrowLeft } from "lucide-react";
 import { authAPI } from "@/services/api";
 import { toast } from "sonner";
@@ -20,14 +21,39 @@ export function SignupPage({ onSignup, onBackToLogin }: SignupPageProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
-  const [role, setRole] = useState<"owner" | "rep">("owner");
+  const [role, setRole] = useState<"owner" | "rep">("rep"); // Default to rep
   const [officeName, setOfficeName] = useState("");
   const [officeId, setOfficeId] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [showPasscodeModal, setShowPasscodeModal] = useState(false);
+  const [passcodeVerified, setPasscodeVerified] = useState(false);
 
   // Set SEO for signup page
   useSEO(SEO_CONFIGS.signup);
+
+  const handleRoleChange = (value: "owner" | "rep") => {
+    setRole(value);
+
+    // If switching to owner, show passcode modal (unless already verified)
+    if (value === "owner" && !passcodeVerified) {
+      setShowPasscodeModal(true);
+    }
+  };
+
+  const handlePasscodeSuccess = () => {
+    setPasscodeVerified(true);
+    setShowPasscodeModal(false);
+    toast.success("Access verified!", {
+      description: "You can now create an owner account.",
+    });
+  };
+
+  const handlePasscodeCancel = () => {
+    setShowPasscodeModal(false);
+    setRole("rep"); // Switch back to rep
+    setPasscodeVerified(false);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -71,10 +97,12 @@ export function SignupPage({ onSignup, onBackToLogin }: SignupPageProps) {
       });
     } catch (err: any) {
       console.error("Signup error:", err);
-      
+
       // Check if it's a server connectivity issue
-      if (err.message?.includes('Load failed') || err.message?.includes('fetch')) {
-        setError("⚠️ Cannot connect to server. The Supabase Edge Function needs to be deployed. See SERVER_DEPLOYMENT_GUIDE.md");
+      if (err.message?.includes("Load failed") || err.message?.includes("fetch")) {
+        setError(
+          "⚠️ Cannot connect to server. The Supabase Edge Function needs to be deployed. See SERVER_DEPLOYMENT_GUIDE.md"
+        );
         toast.error("Server not available", {
           description: "Backend server needs deployment. Check console for details.",
           duration: 7000,
@@ -177,18 +205,18 @@ export function SignupPage({ onSignup, onBackToLogin }: SignupPageProps) {
               </Label>
               <RadioGroup
                 value={role}
-                onValueChange={(value) => setRole(value as "owner" | "rep")}
+                onValueChange={handleRoleChange}
                 className="grid grid-cols-2 gap-3"
               >
                 <RadioGroupItem value="owner" className="p-4 rounded-lg border-2 transition-all">
-                  <div className="font-semibold text-foreground">Office Owner</div>
-                  <div className="text-xs text-muted-foreground mt-1">
+                  <div className="font-semibold text-muted-foreground">Office Owner</div>
+                  <div className="text-xs text-muted-foreground/70 mt-1">
                     Manage team & analytics
                   </div>
                 </RadioGroupItem>
                 <RadioGroupItem value="rep" className="p-4 rounded-lg border-2 transition-all">
-                  <div className="font-semibold text-foreground">Sales Rep</div>
-                  <div className="text-xs text-muted-foreground mt-1">Track my performance</div>
+                  <div className="font-semibold text-muted-foreground">Sales Rep</div>
+                  <div className="text-xs text-muted-foreground/70 mt-1">Track my performance</div>
                 </RadioGroupItem>
               </RadioGroup>
             </div>
@@ -253,6 +281,13 @@ export function SignupPage({ onSignup, onBackToLogin }: SignupPageProps) {
           </p>
         </Card>
       </div>
+
+      {/* Owner Passcode Modal */}
+      <OwnerPasscodeModal
+        isOpen={showPasscodeModal}
+        onSuccess={handlePasscodeSuccess}
+        onCancel={handlePasscodeCancel}
+      />
     </div>
   );
 }
