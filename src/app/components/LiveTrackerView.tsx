@@ -16,6 +16,7 @@ export function LiveTrackerView({ user }: LiveTrackerViewProps) {
   const [stores, setStores] = useState<any[]>([]);
   const [loadingStores, setLoadingStores] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [hasShownRestoreMessage, setHasShownRestoreMessage] = useState(false);
   
   const { 
     tracker, 
@@ -27,13 +28,35 @@ export function LiveTrackerView({ user }: LiveTrackerViewProps) {
     loadTodayData 
   } = useTracker();
 
+  // Show restore message if data was loaded from localStorage
+  useEffect(() => {
+    if (!hasShownRestoreMessage && !loadingStores) {
+      const hasData = Object.values(tracker).some(val => val > 0);
+      if (hasData) {
+        toast.info("Progress restored", {
+          description: "Your previous session was recovered",
+        });
+      }
+      setHasShownRestoreMessage(true);
+    }
+  }, [loadingStores, hasShownRestoreMessage]);
+
   // Load stores
   useEffect(() => {
     const loadStores = async () => {
       try {
         const { stores: storesList } = await storesAPI.getStores();
         setStores(storesList || []);
-        if (storesList && storesList.length > 0) {
+        
+        // If there's a selected store from localStorage, validate it exists
+        if (selectedStore && storesList) {
+          const storeExists = storesList.some((s: any) => s.id === selectedStore);
+          if (!storeExists && storesList.length > 0) {
+            // If saved store doesn't exist, select the first one
+            setSelectedStore(storesList[0].id);
+          }
+        } else if (storesList && storesList.length > 0 && !selectedStore) {
+          // If no store selected yet, select the first one
           setSelectedStore(storesList[0].id);
         }
       } catch (error: any) {
@@ -167,6 +190,7 @@ export function LiveTrackerView({ user }: LiveTrackerViewProps) {
         <div className="text-right">
           <p className="text-xs text-muted-foreground">Today</p>
           <p className="text-sm font-medium text-foreground">{new Date().toLocaleDateString()}</p>
+          <p className="text-xs text-green-500 mt-1">✓ Auto-saving</p>
         </div>
       </div>
 

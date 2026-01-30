@@ -24,28 +24,31 @@ interface TrackerContextType {
 
 const TrackerContext = createContext<TrackerContextType | undefined>(undefined);
 
+const STORAGE_KEY = 'veridex_live_tracker';
+const STORE_KEY = 'veridex_selected_store';
+
 export function TrackerProvider({ children }: { children: ReactNode }) {
-  const [selectedStore, setSelectedStore] = useState("");
-  const [tracker, setTracker] = useState<TrackerState>({
-    stops: 0,
-    contacts: 0,
-    presentations: 0,
-    addressChecks: 0,
-    creditChecks: 0,
-    sales: 0,
-    products: 0,
+  // Load from localStorage on mount
+  const [selectedStore, setSelectedStoreState] = useState(() => {
+    try {
+      const stored = localStorage.getItem(STORE_KEY);
+      return stored || "";
+    } catch {
+      return "";
+    }
   });
 
-  const increment = (field: keyof TrackerState) => {
-    setTracker(prev => ({ ...prev, [field]: prev[field] + 1 }));
-  };
-
-  const decrement = (field: keyof TrackerState) => {
-    setTracker(prev => ({ ...prev, [field]: Math.max(0, prev[field] - 1) }));
-  };
-
-  const resetTracker = () => {
-    setTracker({
+  const [tracker, setTrackerState] = useState<TrackerState>(() => {
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const stored = localStorage.getItem(`${STORAGE_KEY}_${today}`);
+      if (stored) {
+        return JSON.parse(stored);
+      }
+    } catch (error) {
+      console.error('Failed to load tracker from localStorage:', error);
+    }
+    return {
       stops: 0,
       contacts: 0,
       presentations: 0,
@@ -53,7 +56,58 @@ export function TrackerProvider({ children }: { children: ReactNode }) {
       creditChecks: 0,
       sales: 0,
       products: 0,
-    });
+    };
+  });
+
+  // Custom setter that also saves to localStorage
+  const setSelectedStore = (storeId: string) => {
+    setSelectedStoreState(storeId);
+    try {
+      localStorage.setItem(STORE_KEY, storeId);
+    } catch (error) {
+      console.error('Failed to save store to localStorage:', error);
+    }
+  };
+
+  const setTracker = (newTracker: TrackerState) => {
+    setTrackerState(newTracker);
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      localStorage.setItem(`${STORAGE_KEY}_${today}`, JSON.stringify(newTracker));
+    } catch (error) {
+      console.error('Failed to save tracker to localStorage:', error);
+    }
+  };
+
+  // Save to localStorage whenever tracker changes
+  useEffect(() => {
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      localStorage.setItem(`${STORAGE_KEY}_${today}`, JSON.stringify(tracker));
+    } catch (error) {
+      console.error('Failed to save tracker to localStorage:', error);
+    }
+  }, [tracker]);
+
+  const increment = (field: keyof TrackerState) => {
+    setTracker({ ...tracker, [field]: tracker[field] + 1 });
+  };
+
+  const decrement = (field: keyof TrackerState) => {
+    setTracker({ ...tracker, [field]: Math.max(0, tracker[field] - 1) });
+  };
+
+  const resetTracker = () => {
+    const emptyTracker = {
+      stops: 0,
+      contacts: 0,
+      presentations: 0,
+      addressChecks: 0,
+      creditChecks: 0,
+      sales: 0,
+      products: 0,
+    };
+    setTracker(emptyTracker);
   };
 
   const loadTodayData = async (userId: string) => {
@@ -72,7 +126,7 @@ export function TrackerProvider({ children }: { children: ReactNode }) {
       );
       
       if (todayEntry) {
-        setTracker({
+        const loadedTracker = {
           stops: todayEntry.stops || 0,
           contacts: todayEntry.contacts || 0,
           presentations: todayEntry.presentations || 0,
@@ -80,12 +134,28 @@ export function TrackerProvider({ children }: { children: ReactNode }) {
           creditChecks: todayEntry.credit_checks || 0,
           sales: todayEntry.sales || 0,
           products: todayEntry.applications || 0, // Map from applications to products
-        });
+        };
+        setTracker(loadedTracker);
       }
     } catch (error) {
       console.error('Failed to load today data:', error);
     }
   };
+
+  // Clean up old localStorage entries (keep only last 7 days)
+  useEffect(() => {
+    try {
+      const today = new Date();
+      for (let i = 8; i < 30; i++) {
+        const oldDate = new Date(today);
+        oldDate.setDate(oldDate.getDate() - i);
+        const dateKey = oldDate.toISOString().split('T')[0];
+        localStorage.removeItem(`${STORAGE_KEY}_${dateKey}`);
+      }
+    } catch (error) {
+      console.error('Failed to clean up old tracker data:', error);
+    }
+  }, []);
 
   return (
     <TrackerContext.Provider
