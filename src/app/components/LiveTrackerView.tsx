@@ -83,6 +83,8 @@ export function LiveTrackerView({ user }: LiveTrackerViewProps) {
 
     setSaving(true);
     try {
+      // Note: This saves as an official entry, not a draft
+      // Progress is automatically saved to localStorage on every change
       const today = new Date().toISOString().split('T')[0];
       await entriesAPI.submit({
         storeId: selectedStore,
@@ -98,7 +100,7 @@ export function LiveTrackerView({ user }: LiveTrackerViewProps) {
         revenue: 0,
       });
 
-      toast.success("Progress saved!", {
+      toast.success("Progress saved to database!", {
         description: `${tracker.sales} sales recorded`,
         icon: <CheckCircle2 className="size-4" />,
       });
