@@ -83,9 +83,26 @@ export function TrackerProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     try {
       const today = new Date().toISOString().split('T')[0];
-      localStorage.setItem(`${STORAGE_KEY}_${today}`, JSON.stringify(tracker));
+      const storageKey = `${STORAGE_KEY}_${today}`;
+      const dataToSave = JSON.stringify(tracker);
+      
+      localStorage.setItem(storageKey, dataToSave);
+      
+      // Verify save was successful
+      const savedData = localStorage.getItem(storageKey);
+      if (savedData === dataToSave) {
+        console.log('✅ Tracker saved to localStorage:', storageKey, tracker);
+      } else {
+        console.error('❌ localStorage save verification failed!');
+        console.error('   Expected:', dataToSave);
+        console.error('   Got:', savedData);
+      }
     } catch (error) {
-      console.error('Failed to save tracker to localStorage:', error);
+      console.error('❌ Failed to save tracker to localStorage:', error);
+      // Show user-facing error if storage fails
+      if (error instanceof Error && error.name === 'QuotaExceededError') {
+        alert('Storage quota exceeded! Please clear browser data or use a different browser.');
+      }
     }
   }, [tracker]);
 

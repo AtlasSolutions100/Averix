@@ -34,6 +34,12 @@ export function RepDashboardView({ user }: RepDashboardViewProps) {
     period: "weekly",
   });
 
+  // Helper to safely format numbers and prevent NaN
+  const formatNumber = (value: any, defaultValue = 0) => {
+    const num = Number(value);
+    return isNaN(num) || !isFinite(num) ? defaultValue : num;
+  };
+
   useEffect(() => {
     const loadData = async () => {
       try {

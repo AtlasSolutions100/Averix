@@ -37,13 +37,14 @@ export function DailyEntryView({ user }: DailyEntryViewProps) {
 
   // Auto-populate from tracker whenever tracker changes
   useEffect(() => {
-    setContacts(tracker.contacts > 0 ? tracker.contacts.toString() : "");
-    setStops(tracker.stops > 0 ? tracker.stops.toString() : "");
-    setPresentations(tracker.presentations > 0 ? tracker.presentations.toString() : "");
-    setAddressChecks(tracker.addressChecks > 0 ? tracker.addressChecks.toString() : "");
-    setCreditChecks(tracker.creditChecks > 0 ? tracker.creditChecks.toString() : "");
-    setSales(tracker.sales > 0 ? tracker.sales.toString() : "");
-    setProducts(tracker.products > 0 ? tracker.products.toString() : "");
+    // Always populate with tracker values, including 0
+    setContacts(tracker.contacts.toString());
+    setStops(tracker.stops.toString());
+    setPresentations(tracker.presentations.toString());
+    setAddressChecks(tracker.addressChecks.toString());
+    setCreditChecks(tracker.creditChecks.toString());
+    setSales(tracker.sales.toString());
+    setProducts(tracker.products.toString());
   }, [tracker]);
 
   // Load stores on mount
@@ -76,8 +77,32 @@ export function DailyEntryView({ user }: DailyEntryViewProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Validation
     if (!selectedStore) {
       toast.error("Please select a store");
+      return;
+    }
+
+    if (!hoursWorked || parseFloat(hoursWorked) <= 0) {
+      toast.error("Please enter hours worked", {
+        description: "This field is required"
+      });
+      return;
+    }
+
+    if (!revenue || parseFloat(revenue) < 0) {
+      toast.error("Please enter total revenue", {
+        description: "Revenue is required (enter 0 if no revenue)"
+      });
+      return;
+    }
+
+    // Validate all LOA fields are filled
+    if (contacts === "" || stops === "" || presentations === "" || 
+        addressChecks === "" || creditChecks === "" || sales === "" || products === "") {
+      toast.error("Please fill in all LOA fields", {
+        description: "All fields are required (enter 0 if none)"
+      });
       return;
     }
 
@@ -94,8 +119,8 @@ export function DailyEntryView({ user }: DailyEntryViewProps) {
         creditChecks: parseInt(creditChecks) || 0,
         sales: parseInt(sales) || 0,
         applications: parseInt(products) || 0, // Map products to applications in database
-        hoursWorked: parseFloat(hoursWorked) || 0,
-        revenue: parseFloat(revenue) || 0,
+        hoursWorked: parseFloat(hoursWorked),
+        revenue: parseFloat(revenue),
       });
 
       toast.success("Daily entry saved successfully!", {
@@ -168,15 +193,17 @@ export function DailyEntryView({ user }: DailyEntryViewProps) {
             </div>
 
             <div>
-              <Label htmlFor="hours" className="text-foreground">Hours Worked</Label>
+              <Label htmlFor="hours" className="text-foreground">Hours Worked *</Label>
               <Input
                 id="hours"
                 type="number"
                 step="0.5"
+                min="0"
                 placeholder="8"
                 value={hoursWorked}
                 onChange={(e) => setHoursWorked(e.target.value)}
                 className="mt-1 bg-input-background border-border text-foreground placeholder:text-muted-foreground"
+                required
               />
             </div>
           </div>
@@ -282,19 +309,22 @@ export function DailyEntryView({ user }: DailyEntryViewProps) {
         {/* Revenue */}
         <Card className="p-6 bg-card border-border">
           <div>
-            <Label htmlFor="revenue" className="text-foreground">Total Revenue</Label>
+            <Label htmlFor="revenue" className="text-foreground">Total Revenue *</Label>
             <div className="relative mt-1">
               <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">$</span>
               <Input
                 id="revenue"
                 type="number"
                 step="0.01"
+                min="0"
                 placeholder="0.00"
                 value={revenue}
                 onChange={(e) => setRevenue(e.target.value)}
                 className="pl-7 text-lg font-semibold bg-input-background border-border text-foreground"
+                required
               />
             </div>
+            <p className="text-xs text-muted-foreground mt-1">Enter 0 if no revenue generated</p>
           </div>
         </Card>
 

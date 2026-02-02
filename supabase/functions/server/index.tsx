@@ -467,8 +467,8 @@ app.get("/make-server-45dc47a9/analytics/office/:officeId", requireAuth, async (
     // Calculate rates
     const metrics = {
       ...totals,
-      contactRate: totals.stops > 0 ? (totals.contacts / totals.stops * 100).toFixed(1) : 0,
-      presentationRate: totals.contacts > 0 ? (totals.presentations / totals.contacts * 100).toFixed(1) : 0,
+      stopRate: totals.contacts > 0 ? (totals.stops / totals.contacts * 100).toFixed(1) : 0,
+      presentationRate: totals.stops > 0 ? (totals.presentations / totals.stops * 100).toFixed(1) : 0,
       closeRate: totals.contacts > 0 ? (totals.sales / totals.contacts * 100).toFixed(1) : 0,
       revenuePerContact: totals.contacts > 0 ? (totals.revenue / totals.contacts).toFixed(2) : 0,
     };

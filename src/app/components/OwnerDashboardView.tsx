@@ -18,6 +18,17 @@ export function OwnerDashboardView({ user }: OwnerDashboardViewProps) {
   const [metrics, setMetrics] = useState<any>(null);
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
 
+  // Helper to safely format numbers and prevent NaN
+  const formatNumber = (value: any, defaultValue = 0) => {
+    const num = Number(value);
+    return isNaN(num) || !isFinite(num) ? defaultValue : num;
+  };
+
+  const formatMetric = (value: any, prefix = "", suffix = "") => {
+    const num = formatNumber(value);
+    return `${prefix}${num.toLocaleString()}${suffix}`;
+  };
+
   useEffect(() => {
     const loadData = async () => {
       if (!user?.officeId) {
@@ -88,12 +99,12 @@ export function OwnerDashboardView({ user }: OwnerDashboardViewProps) {
   }
 
   const statsData = [
-    { label: "Contacts", value: metrics.contacts.toLocaleString(), change: "+12%", trend: "up", icon: Users, color: "blue" },
-    { label: "Presentations", value: metrics.presentations.toLocaleString(), change: "+8%", trend: "up", icon: Activity, color: "green" },
-    { label: "Sales", value: metrics.sales.toLocaleString(), change: "-3%", trend: "down", icon: Target, color: "orange" },
-    { label: "Revenue", value: `$${metrics.revenue.toLocaleString()}`, change: "+15%", trend: "up", icon: DollarSign, color: "purple" },
-    { label: "Close Rate", value: `${metrics.closeRate}%`, change: "+2.3%", trend: "up", icon: Zap, color: "pink" },
-    { label: "Rev/Contact", value: `$${metrics.revenuePerContact}`, change: "+4%", trend: "up", icon: Store, color: "indigo" },
+    { label: "Contacts", value: formatMetric(metrics.contacts), change: "+12%", trend: "up", icon: Users, color: "blue" },
+    { label: "Presentations", value: formatMetric(metrics.presentations), change: "+8%", trend: "up", icon: Activity, color: "green" },
+    { label: "Sales", value: formatMetric(metrics.sales), change: "-3%", trend: "down", icon: Target, color: "orange" },
+    { label: "Revenue", value: formatMetric(metrics.revenue, "$"), change: "+15%", trend: "up", icon: DollarSign, color: "purple" },
+    { label: "Close Rate", value: formatMetric(metrics.closeRate, "", "%"), change: "+2.3%", trend: "up", icon: Zap, color: "pink" },
+    { label: "Rev/Contact", value: formatMetric(metrics.revenuePerContact, "$"), change: "+4%", trend: "up", icon: Store, color: "indigo" },
   ];
 
   const getColorClasses = (color: string) => {
@@ -173,24 +184,24 @@ export function OwnerDashboardView({ user }: OwnerDashboardViewProps) {
         <h3 className="text-lg font-semibold text-foreground mb-4">LOA Funnel (Last 30 Days)</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="p-4 bg-blue-500/10 rounded-lg border border-blue-500/20">
-            <p className="text-xs text-blue-400 mb-1">Stops</p>
-            <p className="text-3xl font-bold text-foreground">{metrics.stops?.toLocaleString() || 'N/A'}</p>
+            <p className="text-xs text-blue-400 mb-1">1. Contacts</p>
+            <p className="text-3xl font-bold text-foreground">{metrics.contacts?.toLocaleString() || '0'}</p>
             <p className="text-xs text-blue-400 mt-1">100%</p>
           </div>
           <div className="p-4 bg-blue-500/10 rounded-lg border border-blue-500/20">
-            <p className="text-xs text-blue-400 mb-1">Contacts</p>
-            <p className="text-3xl font-bold text-foreground">{metrics.contacts.toLocaleString()}</p>
-            <p className="text-xs text-blue-400 mt-1">{metrics.contactRate}%</p>
+            <p className="text-xs text-blue-400 mb-1">2. Stops</p>
+            <p className="text-3xl font-bold text-foreground">{metrics.stops?.toLocaleString() || '0'}</p>
+            <p className="text-xs text-blue-400 mt-1">{metrics.stopRate || '0.0'}%</p>
           </div>
           <div className="p-4 bg-green-500/10 rounded-lg border border-green-500/20">
-            <p className="text-xs text-green-400 mb-1">Presentations</p>
-            <p className="text-3xl font-bold text-foreground">{metrics.presentations.toLocaleString()}</p>
-            <p className="text-xs text-green-400 mt-1">{metrics.presentationRate}%</p>
+            <p className="text-xs text-green-400 mb-1">3. Presentations</p>
+            <p className="text-3xl font-bold text-foreground">{metrics.presentations?.toLocaleString() || '0'}</p>
+            <p className="text-xs text-green-400 mt-1">{metrics.presentationRate || '0.0'}%</p>
           </div>
           <div className="p-4 bg-orange-500/10 rounded-lg border border-orange-500/20">
-            <p className="text-xs text-orange-400 mb-1">Sales</p>
-            <p className="text-3xl font-bold text-foreground">{metrics.sales.toLocaleString()}</p>
-            <p className="text-xs text-orange-400 mt-1">{metrics.closeRate}%</p>
+            <p className="text-xs text-orange-400 mb-1">6. Sales</p>
+            <p className="text-3xl font-bold text-foreground">{metrics.sales?.toLocaleString() || '0'}</p>
+            <p className="text-xs text-orange-400 mt-1">{metrics.closeRate || '0.0'}%</p>
           </div>
         </div>
       </Card>

@@ -17,6 +17,7 @@ export function LiveTrackerView({ user }: LiveTrackerViewProps) {
   const [loadingStores, setLoadingStores] = useState(true);
   const [saving, setSaving] = useState(false);
   const [hasShownRestoreMessage, setHasShownRestoreMessage] = useState(false);
+  const [lastAutoSave, setLastAutoSave] = useState<Date | null>(null);
   
   const { 
     tracker, 
@@ -28,6 +29,59 @@ export function LiveTrackerView({ user }: LiveTrackerViewProps) {
     loadTodayData 
   } = useTracker();
 
+  // Warn before closing/leaving page if there's unsaved data
+  useEffect(() => {
+    const hasData = Object.values(tracker).some(val => val > 0);
+    
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasData) {
+        e.preventDefault();
+        e.returnValue = ''; // Chrome requires returnValue to be set
+        return ''; // Some browsers require a return value
+      }
+    };
+
+    if (hasData) {
+      window.addEventListener('beforeunload', handleBeforeUnload);
+    }
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [tracker]);
+
+  // Auto-save to database every 5 minutes if there's data
+  useEffect(() => {
+    const hasData = Object.values(tracker).some(val => val > 0);
+    if (!hasData || !selectedStore) return;
+
+    const autoSaveInterval = setInterval(async () => {
+      try {
+        const today = new Date().toISOString().split('T')[0];
+        await entriesAPI.submit({
+          storeId: selectedStore,
+          date: today,
+          stops: tracker.stops,
+          contacts: tracker.contacts,
+          presentations: tracker.presentations,
+          addressChecks: tracker.addressChecks,
+          creditChecks: tracker.creditChecks,
+          sales: tracker.sales,
+          applications: tracker.products,
+          hoursWorked: 0,
+          revenue: 0,
+        });
+        
+        setLastAutoSave(new Date());
+        console.log('✅ Auto-saved progress to database');
+      } catch (error) {
+        console.error('Auto-save failed:', error);
+      }
+    }, 5 * 60 * 1000); // 5 minutes
+
+    return () => clearInterval(autoSaveInterval);
+  }, [tracker, selectedStore]);
+
   // Show restore message if data was loaded from localStorage
   useEffect(() => {
     if (!hasShownRestoreMessage && !loadingStores) {
@@ -36,10 +90,30 @@ export function LiveTrackerView({ user }: LiveTrackerViewProps) {
         toast.info("Progress restored", {
           description: "Your previous session was recovered",
         });
+      } else {
+        // Test localStorage on first load
+        try {
+          const testKey = 'veridex_storage_test';
+          localStorage.setItem(testKey, 'test');
+          const testValue = localStorage.getItem(testKey);
+          localStorage.removeItem(testKey);
+          
+          if (testValue !== 'test') {
+            toast.error("Storage Warning", {
+              description: "Browser storage may not be working properly. Your progress might not save!",
+              duration: 10000,
+            });
+          }
+        } catch (error) {
+          toast.error("Storage Disabled", {
+            description: "Please enable browser storage or disable private browsing mode to save progress.",
+            duration: 15000,
+          });
+        }
       }
       setHasShownRestoreMessage(true);
     }
-  }, [loadingStores, hasShownRestoreMessage]);
+  }, [loadingStores, hasShownRestoreMessage, tracker]);
 
   // Load stores
   useEffect(() => {
