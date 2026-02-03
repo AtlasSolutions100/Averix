@@ -208,16 +208,22 @@ export function SignupPage({ onSignup, onBackToLogin }: SignupPageProps) {
                 onValueChange={handleRoleChange}
                 className="grid grid-cols-2 gap-3"
               >
-                <RadioGroupItem value="owner" className="p-4 rounded-lg border-2 transition-all">
-                  <div className="font-semibold text-muted-foreground">Office Owner</div>
-                  <div className="text-xs text-muted-foreground/70 mt-1">
-                    Manage team & analytics
-                  </div>
-                </RadioGroupItem>
-                <RadioGroupItem value="rep" className="p-4 rounded-lg border-2 transition-all">
-                  <div className="font-semibold text-muted-foreground">Sales Rep</div>
-                  <div className="text-xs text-muted-foreground/70 mt-1">Track my performance</div>
-                </RadioGroupItem>
+                <div className="flex items-center space-x-3 p-4 rounded-lg border-2 border-border hover:border-primary/50 transition-all cursor-pointer">
+                  <RadioGroupItem value="owner" id="role-owner" />
+                  <Label htmlFor="role-owner" className="cursor-pointer flex-1">
+                    <div className="font-semibold text-foreground">Office Owner</div>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      Manage team & analytics
+                    </div>
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-3 p-4 rounded-lg border-2 border-border hover:border-primary/50 transition-all cursor-pointer">
+                  <RadioGroupItem value="rep" id="role-rep" />
+                  <Label htmlFor="role-rep" className="cursor-pointer flex-1">
+                    <div className="font-semibold text-foreground">Sales Rep</div>
+                    <div className="text-xs text-muted-foreground mt-1">Track my performance</div>
+                  </Label>
+                </div>
               </RadioGroup>
             </div>
 
