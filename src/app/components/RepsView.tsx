@@ -3,22 +3,32 @@ import { Card } from "@/app/components/ui/card";
 import { Button } from "@/app/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/app/components/ui/table";
 import { Badge } from "@/app/components/ui/badge";
-import { TrendingUp, Users, Loader2 } from "lucide-react";
+import { TrendingUp, Users, Loader2, ArrowUpDown } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { usersAPI, analyticsAPI } from "@/services/api";
 import type { User } from "@/app/App";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/app/components/ui/select";
 
 interface RepsViewProps {
   user: User;
 }
 
 type TimeFilter = "week" | "month" | "quarter";
+type SortBy = "revenue" | "closeRate" | "revenuePerContact" | "sales";
 
 export function RepsView({ user }: RepsViewProps) {
   const [loading, setLoading] = useState(true);
   const [timeFilter, setTimeFilter] = useState<TimeFilter>("month");
+  const [sortBy, setSortBy] = useState<SortBy>("revenue");
   const [reps, setReps] = useState<any[]>([]);
   const [chartData, setChartData] = useState<any[]>([]);
+  const [topPerformerUserId, setTopPerformerUserId] = useState<string | null>(null);
 
   useEffect(() => {
     const loadData = async () => {
@@ -46,6 +56,14 @@ export function RepsView({ user }: RepsViewProps) {
           endDate: endDate.toISOString().split('T')[0],
         });
 
+        // Find top performer by revenue (always based on revenue)
+        if (leaderboard && leaderboard.length > 0) {
+          const topByRevenue = leaderboard.reduce((max: any, rep: any) => 
+            rep.revenue > max.revenue ? rep : max
+          , leaderboard[0]);
+          setTopPerformerUserId(topByRevenue.userId);
+        }
+
         setReps(leaderboard || []);
         
         // Format for chart
@@ -65,6 +83,22 @@ export function RepsView({ user }: RepsViewProps) {
 
     loadData();
   }, [user?.officeId, timeFilter]);
+
+  // Sort reps based on selected criteria
+  const sortedReps = [...reps].sort((a, b) => {
+    switch (sortBy) {
+      case "revenue":
+        return b.revenue - a.revenue;
+      case "closeRate":
+        return parseFloat(b.closeRate) - parseFloat(a.closeRate);
+      case "revenuePerContact":
+        return parseFloat(b.revenuePerContact) - parseFloat(a.revenuePerContact);
+      case "sales":
+        return b.sales - a.sales;
+      default:
+        return b.revenue - a.revenue;
+    }
+  });
 
   if (loading) {
     return (
@@ -150,6 +184,57 @@ export function RepsView({ user }: RepsViewProps) {
           </Card>
         </div>
 
+        {/* Performance Insights */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card className="p-4 bg-blue-500/10 border-blue-500/20">
+            <p className="text-sm font-semibold text-blue-400 mb-1">Top Closer</p>
+            <p className="text-2xl font-bold text-foreground">
+              {reps.length > 0 
+                ? reps.reduce((max, rep) => parseFloat(rep.closeRate) > parseFloat(max.closeRate) ? rep : max, reps[0])?.name.split(' ')[0] 
+                : 'N/A'
+              }
+            </p>
+            <p className="text-xs text-blue-400">
+              {reps.length > 0 
+                ? `${reps.reduce((max, rep) => parseFloat(rep.closeRate) > parseFloat(max.closeRate) ? rep : max, reps[0])?.closeRate}% close rate`
+                : ''
+              }
+            </p>
+          </Card>
+
+          <Card className="p-4 bg-green-500/10 border-green-500/20">
+            <p className="text-sm font-semibold text-green-400 mb-1">Most Active</p>
+            <p className="text-2xl font-bold text-foreground">
+              {reps.length > 0
+                ? reps.reduce((max, rep) => rep.contacts > max.contacts ? rep : max, reps[0])?.name.split(' ')[0]
+                : 'N/A'
+              }
+            </p>
+            <p className="text-xs text-green-400">
+              {reps.length > 0
+                ? `${reps.reduce((max, rep) => rep.contacts > max.contacts ? rep : max, reps[0])?.contacts} contacts`
+                : ''
+              }
+            </p>
+          </Card>
+
+          <Card className="p-4 bg-purple-500/10 border-purple-500/20">
+            <p className="text-sm font-semibold text-purple-400 mb-1">Highest Revenue</p>
+            <p className="text-2xl font-bold text-foreground">
+              {reps.length > 0
+                ? reps.reduce((max, rep) => rep.revenue > max.revenue ? rep : max, reps[0])?.name.split(' ')[0]
+                : 'N/A'
+              }
+            </p>
+            <p className="text-xs text-purple-400">
+              {reps.length > 0
+                ? `$${reps.reduce((max, rep) => rep.revenue > max.revenue ? rep : max, reps[0])?.revenue.toLocaleString()}`
+                : ''
+              }
+            </p>
+          </Card>
+        </div>
+
         {/* Performance Chart */}
         {chartData.length > 0 && (
           <Card className="p-6 bg-card border-border">
@@ -171,7 +256,27 @@ export function RepsView({ user }: RepsViewProps) {
 
         {/* Rep Performance Table */}
         <Card className="p-6 bg-card border-border">
-          <h3 className="text-lg font-semibold text-foreground mb-4">Detailed Performance</h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-foreground">Detailed Performance</h3>
+            
+            {/* Sort By Dropdown */}
+            <div className="flex items-center gap-2">
+              <ArrowUpDown className="size-4 text-muted-foreground" />
+              <span className="text-sm text-muted-foreground">Sort by:</span>
+              <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortBy)}>
+                <SelectTrigger className="w-[160px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="revenue">Revenue</SelectItem>
+                  <SelectItem value="sales">Sales</SelectItem>
+                  <SelectItem value="closeRate">Close %</SelectItem>
+                  <SelectItem value="revenuePerContact">$/Contact</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
@@ -187,8 +292,10 @@ export function RepsView({ user }: RepsViewProps) {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {reps.map((rep, idx) => {
+                {sortedReps.map((rep, idx) => {
                   const initials = rep.name.split(' ').map((n: string) => n[0]).join('');
+                  const isTopPerformer = rep.userId === topPerformerUserId;
+                  
                   return (
                     <TableRow key={rep.userId}>
                       <TableCell>
@@ -208,7 +315,7 @@ export function RepsView({ user }: RepsViewProps) {
                           </div>
                           <div>
                             <p className="font-medium text-foreground">{rep.name}</p>
-                            {idx === 0 && (
+                            {isTopPerformer && (
                               <div className="flex items-center gap-1 mt-0.5">
                                 <div className="w-1.5 h-1.5 rounded-full bg-gradient-to-r from-yellow-400 to-orange-500 animate-pulse"></div>
                                 <span className="text-xs font-medium bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent">
@@ -239,37 +346,6 @@ export function RepsView({ user }: RepsViewProps) {
             </Table>
           </div>
         </Card>
-
-        {/* Performance Insights */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card className="p-4 bg-blue-500/10 border-blue-500/20">
-            <p className="text-sm font-semibold text-blue-400 mb-1">Top Closer</p>
-            <p className="text-2xl font-bold text-foreground">
-              {reps[0]?.name.split(' ')[0] || 'N/A'}
-            </p>
-            <p className="text-xs text-blue-400">{reps[0]?.closeRate}% close rate</p>
-          </Card>
-
-          <Card className="p-4 bg-green-500/10 border-green-500/20">
-            <p className="text-sm font-semibold text-green-400 mb-1">Most Active</p>
-            <p className="text-2xl font-bold text-foreground">
-              {reps.reduce((max, rep) => rep.contacts > max.contacts ? rep : max, reps[0])?.name.split(' ')[0] || 'N/A'}
-            </p>
-            <p className="text-xs text-green-400">
-              {reps.reduce((max, rep) => rep.contacts > max.contacts ? rep : max, reps[0])?.contacts} contacts
-            </p>
-          </Card>
-
-          <Card className="p-4 bg-purple-500/10 border-purple-500/20">
-            <p className="text-sm font-semibold text-purple-400 mb-1">Highest Revenue</p>
-            <p className="text-2xl font-bold text-foreground">
-              {reps.reduce((max, rep) => rep.revenue > max.revenue ? rep : max, reps[0])?.name.split(' ')[0] || 'N/A'}
-            </p>
-            <p className="text-xs text-purple-400">
-              ${reps.reduce((max, rep) => rep.revenue > max.revenue ? rep : max, reps[0])?.revenue.toLocaleString()}
-            </p>
-          </Card>
-        </div>
       </div>
     </div>
   );

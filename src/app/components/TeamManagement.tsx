@@ -6,7 +6,8 @@ import { Label } from "@/app/components/ui/label";
 import { toast } from "sonner";
 import { usersAPI } from "@/services/api";
 import { User } from "@/app/App";
-import { UserPlus, Trash2, Copy, Users, Eye, EyeOff } from "lucide-react";
+import { UserPlus, Trash2, Copy, Users, Eye, EyeOff, ShieldAlert } from "lucide-react";
+import { ResetRepPasswordDialog } from "@/app/components/ResetRepPasswordDialog";
 
 interface TeamManagementProps {
   user: User;
@@ -31,6 +32,10 @@ export function TeamManagement({ user }: TeamManagementProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [createdCredentials, setCreatedCredentials] = useState<{ email: string; password: string } | null>(null);
+  
+  // Reset password state
+  const [showResetPassword, setShowResetPassword] = useState(false);
+  const [selectedRep, setSelectedRep] = useState<RepUser | null>(null);
 
   useEffect(() => {
     loadUsers();
@@ -226,14 +231,27 @@ export function TeamManagement({ user }: TeamManagementProps) {
                     Joined {new Date(rep.created_at).toLocaleDateString()}
                   </p>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleDeleteUser(rep.id, rep.name)}
-                  className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleDeleteUser(rep.id, rep.name)}
+                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setSelectedRep(rep);
+                      setShowResetPassword(true);
+                    }}
+                    className="text-primary hover:text-primary hover:bg-primary/10"
+                  >
+                    <ShieldAlert className="w-4 h-4" />
+                  </Button>
+                </div>
               </div>
             ))}
           </div>
@@ -411,6 +429,17 @@ export function TeamManagement({ user }: TeamManagementProps) {
             </Button>
           </Card>
         </div>
+      )}
+
+      {/* Reset Password Dialog */}
+      {showResetPassword && selectedRep && (
+        <ResetRepPasswordDialog
+          open={showResetPassword}
+          onOpenChange={setShowResetPassword}
+          repId={selectedRep.id}
+          repName={selectedRep.name}
+          repEmail={selectedRep.email}
+        />
       )}
     </div>
   );

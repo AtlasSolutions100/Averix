@@ -1,5 +1,5 @@
 import { ReactNode, useState, useEffect } from "react";
-import { LogOut, LayoutDashboard, Store, Target, TrendingUp, Clock, History, Grid, Bell, Menu, X } from "lucide-react";
+import { LogOut, LayoutDashboard, Store, Target, TrendingUp, Clock, History, Grid, Bell, Menu, X, Lock } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
 import { VeridexLogo } from "@/app/components/VeridexLogo";
 import { User } from "@/app/App";
@@ -9,6 +9,7 @@ import { DailyEntryView } from "@/app/components/DailyEntryView";
 import { RepHistoryView } from "@/app/components/RepHistoryView";
 import { ReportsView } from "@/app/components/ReportsView";
 import { TrackerProvider } from "@/contexts/TrackerContext";
+import { ChangePasswordDialog } from "@/app/components/ChangePasswordDialog";
 import { useSEO, SEO_CONFIGS } from "@/hooks/useSEO";
 
 interface RepLayoutProps {
@@ -21,6 +22,7 @@ type ViewType = "dashboard" | "liveTracker" | "dailyEntry" | "history" | "report
 export function RepLayout({ user, onLogout }: RepLayoutProps) {
   const [currentView, setCurrentView] = useState<ViewType>("dashboard");
   const [menuOpen, setMenuOpen] = useState(false);
+  const [showChangePassword, setShowChangePassword] = useState(false);
 
   // Update SEO based on current view
   useEffect(() => {
@@ -141,6 +143,15 @@ export function RepLayout({ user, onLogout }: RepLayoutProps) {
             <div className="p-4 border-t border-border">
               <p className="text-xs text-muted-foreground mb-2">{user.officeName}</p>
               <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowChangePassword(true)}
+                className="w-full justify-start text-foreground hover:bg-secondary mb-1"
+              >
+                <Lock className="size-4 mr-2" />
+                Change Password
+              </Button>
+              <Button
                 variant="outline"
                 size="sm"
                 onClick={onLogout}
@@ -182,6 +193,12 @@ export function RepLayout({ user, onLogout }: RepLayoutProps) {
             );
           })}
         </div>
+
+        {/* Change Password Dialog */}
+        <ChangePasswordDialog 
+          open={showChangePassword} 
+          onOpenChange={setShowChangePassword} 
+        />
       </div>
     </TrackerProvider>
   );

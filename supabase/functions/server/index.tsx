@@ -270,6 +270,127 @@ app.get("/make-server-45dc47a9/auth/me", async (c) => {
   }
 });
 
+// Change own password
+app.put("/make-server-45dc47a9/auth/change-password", requireAuth, async (c) => {
+  try {
+    const user = c.get('user');
+    const { currentPassword, newPassword } = await c.req.json();
+    
+    if (!currentPassword || !newPassword) {
+      return c.json({ error: 'Current password and new password are required' }, 400);
+    }
+    
+    if (newPassword.length < 6) {
+      return c.json({ error: 'New password must be at least 6 characters' }, 400);
+    }
+    
+    const supabase = getSupabaseClient();
+    
+    // Verify current password by attempting to sign in
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email: user.email,
+      password: currentPassword,
+    });
+    
+    if (signInError) {
+      console.error('❌ Current password verification failed:', signInError);
+      return c.json({ error: 'Current password is incorrect' }, 401);
+    }
+    
+    // Update password using admin API
+    const { error: updateError } = await supabase.auth.admin.updateUserById(
+      user.id,
+      { password: newPassword }
+    );
+    
+    if (updateError) {
+      console.error('❌ Password update failed:', updateError);
+      return c.json({ error: updateError.message }, 400);
+    }
+    
+    console.log('✅ Password changed successfully for user:', user.id);
+    return c.json({ success: true, message: 'Password changed successfully' });
+  } catch (error) {
+    console.error('Change password error:', error);
+    return c.json({ error: 'Internal server error changing password' }, 500);
+  }
+});
+
+// Reset rep password (owner only)
+app.post("/make-server-45dc47a9/auth/reset-rep-password", requireAuth, async (c) => {
+  try {
+    const user = c.get('user');
+    const { repId, newPassword } = await c.req.json();
+    
+    if (!repId || !newPassword) {
+      return c.json({ error: 'Rep ID and new password are required' }, 400);
+    }
+    
+    if (newPassword.length < 6) {
+      return c.json({ error: 'New password must be at least 6 characters' }, 400);
+    }
+    
+    const supabase = getSupabaseClient();
+    
+    // Get requesting user's profile
+    const { data: profile } = await supabase
+      .from('user_profiles')
+      .select('role, office_id')
+      .eq('id', user.id)
+      .single();
+    
+    // Only owners can reset passwords
+    if (profile?.role !== 'owner' && profile?.role !== 'cydcor') {
+      return c.json({ error: 'Only owners can reset rep passwords' }, 403);
+    }
+    
+    // Get rep's profile to verify they're in the same office
+    const { data: repProfile } = await supabase
+      .from('user_profiles')
+      .select('office_id, role, email, name')
+      .eq('id', repId)
+      .single();
+    
+    if (!repProfile) {
+      return c.json({ error: 'Rep not found' }, 404);
+    }
+    
+    if (repProfile.office_id !== profile.office_id) {
+      return c.json({ error: 'Cannot reset passwords for reps in other offices' }, 403);
+    }
+    
+    // Don't allow resetting owner passwords
+    if (repProfile.role === 'owner' || repProfile.role === 'cydcor') {
+      return c.json({ error: 'Cannot reset owner passwords' }, 403);
+    }
+    
+    // Update password using admin API
+    const { error: updateError } = await supabase.auth.admin.updateUserById(
+      repId,
+      { password: newPassword }
+    );
+    
+    if (updateError) {
+      console.error('❌ Rep password reset failed:', updateError);
+      return c.json({ error: updateError.message }, 400);
+    }
+    
+    console.log(`✅ Password reset successfully for rep: ${repProfile.name} (${repProfile.email})`);
+    return c.json({ 
+      success: true, 
+      message: 'Password reset successfully',
+      rep: {
+        id: repId,
+        email: repProfile.email,
+        name: repProfile.name,
+      }
+    });
+  } catch (error) {
+    console.error('Reset rep password error:', error);
+    return c.json({ error: 'Internal server error resetting password' }, 500);
+  }
+});
+
 // ============================================================================
 // DAILY ENTRIES ENDPOINTS
 // ============================================================================
@@ -431,51 +552,59 @@ app.get("/make-server-45dc47a9/entries/office/:officeId", requireAuth, async (c)
 // LIVE TRACKER PROGRESS ENDPOINTS (DRAFTS - NOT OFFICIAL SUBMISSIONS)
 // ============================================================================
 
-// Save/update live tracker progress (auto-save)
+// Save live tracker progress (auto-save)
 app.post("/make-server-45dc47a9/tracker/progress", requireAuth, async (c) => {
   try {
     const user = c.get('user');
     const progress = await c.req.json();
     const supabase = getSupabaseClient();
     
+    console.log('💾 Saving tracker progress for user:', user.id, 'date:', progress.date);
+    
     // Get user's office_id
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('user_profiles')
       .select('office_id')
       .eq('id', user.id)
       .single();
     
-    // Upsert tracker progress (one per user per day)
-    const { data, error } = await supabase
-      .from('live_tracker_progress')
-      .upsert({
-        user_id: user.id,
-        office_id: profile.office_id,
-        tracker_date: progress.date,
-        store_id: progress.storeId || null,
-        contacts: progress.contacts || 0,
-        stops: progress.stops || 0,
-        presentations: progress.presentations || 0,
-        address_checks: progress.addressChecks || 0,
-        credit_checks: progress.creditChecks || 0,
-        sales: progress.sales || 0,
-        products: progress.products || 0,
-        last_saved: new Date().toISOString(),
-      }, {
-        onConflict: 'user_id,tracker_date'
-      })
-      .select()
-      .single();
-    
-    if (error) {
-      console.error('Tracker progress save error:', error);
-      return c.json({ error: error.message }, 400);
+    if (profileError) {
+      console.error('❌ Failed to fetch profile:', profileError);
+      return c.json({ error: `Failed to fetch user profile: ${profileError.message}` }, 400);
     }
     
-    return c.json({ progress: data });
-  } catch (error) {
-    console.error('Save tracker progress error:', error);
-    return c.json({ error: 'Internal server error saving tracker progress' }, 500);
+    if (!profile) {
+      console.error('❌ No profile found for user:', user.id);
+      return c.json({ error: 'User profile not found' }, 404);
+    }
+    
+    // Store tracker progress in KV store
+    const key = `tracker_progress:${user.id}:${progress.date}`;
+    const trackerData = {
+      user_id: user.id,
+      office_id: profile.office_id,
+      tracker_date: progress.date,
+      store_id: progress.storeId || null,
+      contacts: progress.contacts || 0,
+      stops: progress.stops || 0,
+      presentations: progress.presentations || 0,
+      address_checks: progress.addressChecks || 0,
+      credit_checks: progress.creditChecks || 0,
+      sales: progress.sales || 0,
+      products: progress.products || 0,
+      last_saved: new Date().toISOString(),
+    };
+    
+    console.log('💾 Storing tracker data with key:', key);
+    await kvStore.set(key, trackerData);
+    console.log('✅ Tracker progress saved successfully');
+    
+    return c.json({ progress: trackerData });
+  } catch (error: any) {
+    console.error('❌ Save tracker progress error:', error);
+    console.error('   Error message:', error?.message);
+    console.error('   Error stack:', error?.stack);
+    return c.json({ error: `Internal server error saving tracker progress: ${error?.message || String(error)}` }, 500);
   }
 });
 
@@ -484,19 +613,10 @@ app.get("/make-server-45dc47a9/tracker/progress/:date", requireAuth, async (c) =
   try {
     const user = c.get('user');
     const date = c.req.param('date');
-    const supabase = getSupabaseClient();
     
-    const { data, error } = await supabase
-      .from('live_tracker_progress')
-      .select('*')
-      .eq('user_id', user.id)
-      .eq('tracker_date', date)
-      .maybeSingle();
-    
-    if (error) {
-      console.error('Fetch tracker progress error:', error);
-      return c.json({ error: error.message }, 400);
-    }
+    // Get tracker progress from KV store
+    const key = `tracker_progress:${user.id}:${date}`;
+    const data = await kvStore.get(key);
     
     return c.json({ progress: data });
   } catch (error) {
@@ -626,7 +746,7 @@ app.get("/make-server-45dc47a9/analytics/leaderboard/:officeId", requireAuth, as
       acc[userId].addressChecks += entry.address_checks || 0;
       acc[userId].creditChecks += entry.credit_checks || 0;
       acc[userId].sales += entry.sales || 0;
-      acc[userId].products += entry.products || 0;
+      acc[userId].products += entry.applications || 0; // Map applications to products for display
       acc[userId].applications += entry.applications || 0;
       acc[userId].revenue += parseFloat(entry.revenue || 0);
       

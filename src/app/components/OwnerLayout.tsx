@@ -1,5 +1,5 @@
 import { ReactNode, useState, useEffect } from "react";
-import { LogOut, LayoutDashboard, Users, Store, Target, TrendingUp, Settings, Grid, Bell, UsersRound, Building2, ClipboardList, PieChart } from "lucide-react";
+import { LogOut, LayoutDashboard, Users, Store, Target, TrendingUp, Settings, Grid, Bell, UsersRound, Building2, ClipboardList, PieChart, Lock } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
 import { VeridexLogo } from "@/app/components/VeridexLogo";
 import { User } from "@/app/App";
@@ -13,6 +13,7 @@ import { StoreManagementView } from "@/app/components/StoreManagementView";
 import { OfficeSettingsView } from "@/app/components/OfficeSettingsView";
 import { EntriesView } from "@/app/components/EntriesView";
 import { StorePerformanceView } from "@/app/components/StorePerformanceView";
+import { ChangePasswordDialog } from "@/app/components/ChangePasswordDialog";
 import { useSEO, SEO_CONFIGS } from "@/hooks/useSEO";
 
 interface OwnerLayoutProps {
@@ -24,6 +25,7 @@ type ViewType = "dashboard" | "reps" | "stores" | "loa" | "goals" | "team" | "st
 
 export function OwnerLayout({ user, onLogout }: OwnerLayoutProps) {
   const [currentView, setCurrentView] = useState<ViewType>("dashboard");
+  const [showChangePassword, setShowChangePassword] = useState(false);
 
   // Update SEO based on current view
   useEffect(() => {
@@ -112,6 +114,15 @@ export function OwnerLayout({ user, onLogout }: OwnerLayoutProps) {
           <Button
             variant="ghost"
             size="sm"
+            onClick={() => setShowChangePassword(true)}
+            className="w-full justify-start text-foreground hover:text-foreground hover:bg-secondary mb-1"
+          >
+            <Lock className="size-4 mr-2" />
+            Change Password
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={onLogout}
             className="w-full justify-start text-foreground hover:text-foreground hover:bg-secondary"
           >
@@ -166,6 +177,12 @@ export function OwnerLayout({ user, onLogout }: OwnerLayoutProps) {
           {currentView === "storePerformance" && <StorePerformanceView user={user} />}
         </div>
       </div>
+
+      {/* Change Password Dialog */}
+      <ChangePasswordDialog 
+        open={showChangePassword} 
+        onOpenChange={setShowChangePassword} 
+      />
     </div>
   );
 }

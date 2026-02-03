@@ -32,8 +32,8 @@ export function LoginPage({ onLogin, onSwitchToSignup }: LoginPageProps) {
       // Sign in with Supabase
       await authAPI.signIn(email, password);
       
-      // Small delay to ensure session is persisted
-      await new Promise(resolve => setTimeout(resolve, 300));
+      // Wait for session to be fully persisted and available
+      await new Promise(resolve => setTimeout(resolve, 500));
       
       // Get user profile
       const userData = await authAPI.getMe();
@@ -74,8 +74,8 @@ export function LoginPage({ onLogin, onSwitchToSignup }: LoginPageProps) {
     try {
       await authAPI.signIn(userEmail, "demo");
       
-      // Small delay to ensure session is persisted
-      await new Promise(resolve => setTimeout(resolve, 300));
+      // Wait for session to be fully persisted and available
+      await new Promise(resolve => setTimeout(resolve, 500));
       
       const userData = await authAPI.getMe();
       onLogin(userData);

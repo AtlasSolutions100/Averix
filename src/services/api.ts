@@ -26,35 +26,47 @@ const getAPIBase = () => {
   return `https://${projectId}.supabase.co/functions/v1/make-server-45dc47a9`;
 };
 
-// Singleton Supabase client
-let supabaseClient: SupabaseClient | null = null;
-
-const getSupabaseClient = () => {
-  if (!supabaseClient) {
-    loadConfig();
-    
-    if (!projectId || !publicAnonKey) {
-      throw new Error('Supabase configuration not available');
-    }
-    
-    const supabaseUrl = `https://${projectId}.supabase.co`;
-    supabaseClient = createClient(
-      supabaseUrl,
-      publicAnonKey,
-      {
-        auth: {
-          autoRefreshToken: true,
-          persistSession: true,
-          detectSessionInUrl: true,
-          storage: window.localStorage,
-          storageKey: 'veridex-auth-token',
-        },
-      });
+// CRITICAL: Use window as the SINGLE SOURCE OF TRUTH for the Supabase client
+// This prevents multiple instances across hot reloads and module re-imports
+const getSupabaseClient = (): SupabaseClient => {
+  // ALWAYS check window first - it's the single source of truth
+  if (typeof window !== 'undefined' && (window as any).__veridexSupabaseClient) {
+    return (window as any).__veridexSupabaseClient;
   }
-  return supabaseClient;
+  
+  // Only create if it doesn't exist in window
+  loadConfig();
+  
+  if (!projectId || !publicAnonKey) {
+    throw new Error('Supabase configuration not available');
+  }
+  
+  console.log('🔧 Creating NEW Supabase client (should only happen ONCE per page load)');
+  
+  const supabaseUrl = `https://${projectId}.supabase.co`;
+  const client = createClient(
+    supabaseUrl,
+    publicAnonKey,
+    {
+      auth: {
+        autoRefreshToken: true,
+        persistSession: true,
+        detectSessionInUrl: false,
+        storage: window.localStorage,
+        storageKey: 'veridex-auth-token',
+      },
+    });
+    
+  // IMMEDIATELY store in window before returning
+  if (typeof window !== 'undefined') {
+    (window as any).__veridexSupabaseClient = client;
+  }
+    
+  console.log('✅ Supabase client created and stored in window.__veridexSupabaseClient');
+  return client;
 };
 
-// Export supabase client
+// Export supabase client as proxy that always gets from window
 export const supabase = {
   get auth() {
     return getSupabaseClient().auth;
@@ -64,37 +76,66 @@ export const supabase = {
   },
 };
 
-// Helper function to get auth headers
+// Helper function to get auth headers (used for API requests)
 const getAuthHeaders = async () => {
   loadConfig();
   
   console.log('🔐 Getting auth headers...');
-  const { data: { session }, error } = await getSupabaseClient().auth.getSession();
   
-  if (error) {
-    console.error('❌ Error getting session for auth headers:', error);
-    throw new Error('Failed to get authentication session');
+  try {
+    // First try to get the session
+    const { data: { session }, error: sessionError } = await getSupabaseClient().auth.getSession();
+    
+    if (sessionError) {
+      console.error('❌ Error getting session for auth headers:', sessionError);
+      throw new Error('Failed to get authentication session');
+    }
+    
+    if (!session || !session.access_token) {
+      console.error('❌ No session or access token available');
+      console.error('   Session:', session);
+      
+      // Try to refresh the session one more time
+      console.log('🔄 Attempting to refresh session...');
+      const { data: { session: refreshedSession }, error: refreshError } = await getSupabaseClient().auth.refreshSession();
+      
+      if (refreshError || !refreshedSession) {
+        console.error('❌ Session refresh failed:', refreshError);
+        // Clear the session storage to force re-login
+        localStorage.removeItem('veridex-auth-token');
+        throw new Error('Session expired, user needs to log in again');
+      }
+      
+      console.log('✅ Session refreshed successfully');
+      return {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${publicAnonKey}`,
+        'X-User-Token': refreshedSession.access_token,
+      };
+    }
+    
+    console.log('✅ Session found, access token length:', session.access_token.length);
+    console.log('   Token preview:', session.access_token.substring(0, 30) + '...');
+    
+    return {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${publicAnonKey}`, // Use anon key for Supabase gateway
+      'X-User-Token': session.access_token, // Send actual user token in custom header
+    };
+  } catch (error: any) {
+    // Handle abort errors gracefully
+    if (error.name === 'AbortError' || error.message?.includes('aborted')) {
+      console.log('ℹ️ Session fetch was aborted (component unmounted or navigation occurred)');
+      throw new Error('Request aborted');
+    }
+    throw error;
   }
-  
-  if (!session || !session.access_token) {
-    console.error('❌ No session or access token available');
-    console.error('   Session:', session);
-    throw new Error('No active session. Please log in again.');
-  }
-  
-  console.log('✅ Session found, access token length:', session.access_token.length);
-  console.log('   Token preview:', session.access_token.substring(0, 30) + '...');
-  
-  return {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${publicAnonKey}`, // Use anon key for Supabase gateway
-    'X-User-Token': session.access_token, // Send actual user token in custom header
-  };
 };
 
 // ============================================================================
 // AUTHENTICATION API
 // ============================================================================
+// Cache bust: 2026-02-03-v3
 
 export const authAPI = {
   // Sign in with email and password
@@ -119,14 +160,9 @@ export const authAPI = {
       payload.officeId = officeIdOrName;
     }
     
-    // Signup doesn't require authentication, just basic headers
-    loadConfig();
     const response = await fetch(`${getAPIBase()}/auth/signup`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${publicAnonKey}`, // Use anon key for Supabase gateway
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
     
@@ -138,45 +174,41 @@ export const authAPI = {
     return response.json();
   },
 
-  // Get current user profile
+  // Get current session
+  getSession: async () => {
+    const { data, error } = await getSupabaseClient().auth.getSession();
+    if (error) throw error;
+    return data.session;
+  },
+
+  // Get current user (alias for getCurrentUser)
   getMe: async () => {
-    try {
-      const headers = await getAuthHeaders();
-      const apiBase = getAPIBase();
-      
-      console.log('📡 Fetching user profile from:', `${apiBase}/auth/me`);
-      console.log('📡 Headers:', { 
-        'Content-Type': headers['Content-Type'],
-        'X-User-Token': headers['X-User-Token']?.substring(0, 20) + '...' 
-      });
-      
-      const response = await fetch(`${apiBase}/auth/me`, {
-        headers,
-      });
-      
-      console.log('📡 Response status:', response.status, response.statusText);
-      
-      if (!response.ok) {
-        let errorMsg = 'Failed to fetch user';
-        try {
-          const error = await response.json();
-          errorMsg = error.error || errorMsg;
-          console.error('📡 Error response:', error);
-        } catch (e) {
-          const text = await response.text();
-          errorMsg = text || errorMsg;
-          console.error('📡 Error text:', text);
-        }
-        throw new Error(errorMsg);
-      }
-      
-      const data = await response.json();
-      console.log('✅ User profile fetched successfully');
-      return data;
-    } catch (error) {
-      console.error('❌ getMe API error:', error);
-      throw error;
+    const headers = await getAuthHeaders();
+    const response = await fetch(`${getAPIBase()}/auth/me`, {
+      headers,
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to fetch user');
     }
+    
+    return response.json();
+  },
+
+  // Get current user
+  getCurrentUser: async () => {
+    const headers = await getAuthHeaders();
+    const response = await fetch(`${getAPIBase()}/auth/me`, {
+      headers,
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to fetch user');
+    }
+    
+    return response.json();
   },
 
   // Sign out
@@ -184,12 +216,39 @@ export const authAPI = {
     const { error } = await getSupabaseClient().auth.signOut();
     if (error) throw error;
   },
-
-  // Get session
-  getSession: async () => {
-    const { data: { session }, error } = await getSupabaseClient().auth.getSession();
-    if (error) throw error;
-    return session;
+  
+  // Change password
+  changePassword: async (currentPassword: string, newPassword: string) => {
+    const headers = await getAuthHeaders();
+    const response = await fetch(`${getAPIBase()}/auth/change-password`, {
+      method: 'PUT',
+      headers,
+      body: JSON.stringify({ currentPassword, newPassword }),
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to change password');
+    }
+    
+    return response.json();
+  },
+  
+  // Reset rep password (owner only)
+  resetRepPassword: async (repId: string, newPassword: string) => {
+    const headers = await getAuthHeaders();
+    const response = await fetch(`${getAPIBase()}/auth/reset-rep-password`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ repId, newPassword }),
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to reset password');
+    }
+    
+    return response.json();
   },
 };
 
