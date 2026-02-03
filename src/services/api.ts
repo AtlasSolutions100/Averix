@@ -194,18 +194,18 @@ export const authAPI = {
 };
 
 // ============================================================================
-// DAILY ENTRIES API
+// DAILY ENTRIES API (OFFICIAL SUBMISSIONS - ONE PER DAY)
 // ============================================================================
 
 export interface DailyEntry {
   storeId: string;
   date: string;
-  stops?: number;
-  contacts?: number;
-  presentations?: number;
-  addressChecks?: number;
-  creditChecks?: number;
-  sales?: number;
+  stops: number;
+  contacts: number;
+  presentations: number;
+  addressChecks: number;
+  creditChecks: number;
+  sales: number;
   applications?: number;
   revenue?: number;
   hoursWorked?: number;
@@ -260,7 +260,70 @@ export const entriesAPI = {
     
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.error || 'Failed to fetch office entries');
+      throw new Error(error.error || 'Failed to fetch entries');
+    }
+    
+    return response.json();
+  },
+
+  // Delete entry (owner only)
+  deleteEntry: async (entryId: string) => {
+    const response = await fetch(`${getAPIBase()}/entries/${entryId}`, {
+      method: 'DELETE',
+      headers: await getAuthHeaders(),
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to delete entry');
+    }
+    
+    return response.json();
+  },
+};
+
+// ============================================================================
+// LIVE TRACKER PROGRESS API (DRAFTS - NOT OFFICIAL SUBMISSIONS)
+// ============================================================================
+
+export interface TrackerProgress {
+  date: string;
+  storeId?: string;
+  contacts: number;
+  stops: number;
+  presentations: number;
+  addressChecks: number;
+  creditChecks: number;
+  sales: number;
+  products: number;
+}
+
+export const trackerAPI = {
+  // Save/update live tracker progress (auto-save)
+  saveProgress: async (progress: TrackerProgress) => {
+    const response = await fetch(`${getAPIBase()}/tracker/progress`, {
+      method: 'POST',
+      headers: await getAuthHeaders(),
+      body: JSON.stringify(progress),
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to save tracker progress');
+    }
+    
+    return response.json();
+  },
+
+  // Get today's tracker progress
+  getProgress: async (date: string) => {
+    const response = await fetch(`${getAPIBase()}/tracker/progress/${date}`, {
+      headers: await getAuthHeaders(),
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to load tracker progress');
     }
     
     return response.json();

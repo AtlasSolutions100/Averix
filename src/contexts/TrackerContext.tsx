@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { entriesAPI } from '@/services/api';
+import { trackerAPI } from '@/services/api';
 
 export interface TrackerState {
   stops: number;
@@ -128,34 +128,29 @@ export function TrackerProvider({ children }: { children: ReactNode }) {
   };
 
   const loadTodayData = async (userId: string) => {
-    if (!selectedStore) return;
-    
     try {
       const today = new Date().toISOString().split('T')[0];
-      const { entries } = await entriesAPI.getUserEntries(userId, {
-        startDate: today,
-        endDate: today,
-      });
+      const { progress } = await trackerAPI.getProgress(today);
       
-      // Find entry for selected store today
-      const todayEntry = entries?.find((e: any) => 
-        e.store_id === selectedStore && e.entry_date === today
-      );
-      
-      if (todayEntry) {
+      if (progress) {
         const loadedTracker = {
-          stops: todayEntry.stops || 0,
-          contacts: todayEntry.contacts || 0,
-          presentations: todayEntry.presentations || 0,
-          addressChecks: todayEntry.address_checks || 0,
-          creditChecks: todayEntry.credit_checks || 0,
-          sales: todayEntry.sales || 0,
-          products: todayEntry.applications || 0, // Map from applications to products
+          contacts: progress.contacts || 0,
+          stops: progress.stops || 0,
+          presentations: progress.presentations || 0,
+          addressChecks: progress.address_checks || 0,
+          creditChecks: progress.credit_checks || 0,
+          sales: progress.sales || 0,
+          products: progress.products || 0,
         };
         setTracker(loadedTracker);
+        
+        // Also restore selected store if available
+        if (progress.store_id) {
+          setSelectedStore(progress.store_id);
+        }
       }
     } catch (error) {
-      console.error('Failed to load today data:', error);
+      console.error('Failed to load tracker progress:', error);
     }
   };
 

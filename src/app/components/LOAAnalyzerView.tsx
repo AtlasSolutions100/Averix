@@ -4,18 +4,44 @@ import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
 import { Label } from "@/app/components/ui/label";
 import { Badge } from "@/app/components/ui/badge";
-import { Loader2, Target, TrendingUp, Save, CheckCircle2 } from "lucide-react";
+import { Loader2, Target, TrendingUp, Save, CheckCircle2, Users, ArrowRight } from "lucide-react";
 import { analyticsAPI, goalsAPI } from "@/services/api";
 import type { User } from "@/app/App";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/app/components/ui/table";
 
 interface LOAAnalyzerViewProps {
   user: User;
+}
+
+interface RepLOAData {
+  userId: string;
+  name: string;
+  contacts: number;
+  stops: number;
+  presentations: number;
+  addressChecks: number;
+  creditChecks: number;
+  sales: number;
+  products: number;
+  revenue: number;
+  closeRate: string;
+  contactsPerSale: string;
+  presentationsPerSale: string;
+  stopsPerContact: string;
 }
 
 export function LOAAnalyzerView({ user }: LOAAnalyzerViewProps) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [repData, setRepData] = useState<RepLOAData[]>([]);
   const [metrics, setMetrics] = useState<any>(null);
   
   // Default goals structure
@@ -46,8 +72,12 @@ export function LOAAnalyzerView({ user }: LOAAnalyzerViewProps) {
         const startDate = new Date();
         startDate.setMonth(startDate.getMonth() - 1);
 
-        const [analyticsRes, goalsRes] = await Promise.all([
+        const [analyticsRes, leaderboardRes, goalsRes] = await Promise.all([
           analyticsAPI.getOfficeAnalytics(user.officeId, {
+            startDate: startDate.toISOString().split('T')[0],
+            endDate: endDate.toISOString().split('T')[0],
+          }),
+          analyticsAPI.getLeaderboard(user.officeId, {
             startDate: startDate.toISOString().split('T')[0],
             endDate: endDate.toISOString().split('T')[0],
           }),
@@ -57,8 +87,16 @@ export function LOAAnalyzerView({ user }: LOAAnalyzerViewProps) {
         if (analyticsRes?.metrics) {
           setMetrics(analyticsRes.metrics);
         }
-        if (goalsRes?.goals) {
-          // Merge with defaults to ensure all properties exist
+        
+        if (leaderboardRes?.leaderboard) {
+          setRepData(leaderboardRes.leaderboard);
+        }
+        
+        if (goalsRes?.loaTargets) {
+          // Use LOA targets if available, otherwise use default goals
+          setGoals({ ...defaultGoals, ...goalsRes.loaTargets });
+        } else if (goalsRes?.goals) {
+          // Fallback to regular goals object for backward compatibility
           setGoals({ ...defaultGoals, ...goalsRes.goals });
         }
       } catch (error) {
@@ -118,8 +156,96 @@ export function LOAAnalyzerView({ user }: LOAAnalyzerViewProps) {
       <div className="flex-1 overflow-auto p-6 space-y-6">
         <div>
           <h2 className="text-2xl font-semibold text-foreground">LOA Analyzer</h2>
-          <p className="text-muted-foreground">Set goals and analyze Law of Averages metrics</p>
+          <p className="text-muted-foreground">Analyze rep performance and Law of Averages metrics</p>
         </div>
+
+        {/* Rep LOA Table */}
+        <Card className="p-6 bg-card border-border">
+          <div className="flex items-center gap-2 mb-4">
+            <Users className="size-5 text-primary" />
+            <h3 className="text-lg font-semibold text-foreground">Rep LOA Performance (Last 30 Days)</h3>
+          </div>
+
+          {repData.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">
+              <Users className="size-12 mx-auto mb-3 opacity-50" />
+              <p>No rep data available for the selected period</p>
+              <p className="text-sm mt-2">Reps need to submit daily entries to appear here</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="font-semibold">Rep</TableHead>
+                    <TableHead className="text-center font-semibold">Contacts</TableHead>
+                    <TableHead className="text-center font-semibold">
+                      <div className="flex items-center justify-center gap-1">
+                        <ArrowRight className="size-3" />
+                        Stops
+                      </div>
+                    </TableHead>
+                    <TableHead className="text-center font-semibold">
+                      <div className="flex items-center justify-center gap-1">
+                        <ArrowRight className="size-3" />
+                        Presentations
+                      </div>
+                    </TableHead>
+                    <TableHead className="text-center font-semibold">
+                      <div className="flex items-center justify-center gap-1">
+                        <ArrowRight className="size-3" />
+                        Address Checks
+                      </div>
+                    </TableHead>
+                    <TableHead className="text-center font-semibold">
+                      <div className="flex items-center justify-center gap-1">
+                        <ArrowRight className="size-3" />
+                        Credit Checks
+                      </div>
+                    </TableHead>
+                    <TableHead className="text-center font-semibold">
+                      <div className="flex items-center justify-center gap-1">
+                        <ArrowRight className="size-3" />
+                        Sales
+                      </div>
+                    </TableHead>
+                    <TableHead className="text-center font-semibold">
+                      <div className="flex items-center justify-center gap-1">
+                        <ArrowRight className="size-3" />
+                        Products
+                      </div>
+                    </TableHead>
+                    <TableHead className="text-center font-semibold">Close Rate</TableHead>
+                    <TableHead className="text-center font-semibold">Revenue</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {repData.map((rep) => (
+                    <TableRow key={rep.userId}>
+                      <TableCell className="font-medium">{rep.name}</TableCell>
+                      <TableCell className="text-center">{rep.contacts}</TableCell>
+                      <TableCell className="text-center">{rep.stops}</TableCell>
+                      <TableCell className="text-center">{rep.presentations}</TableCell>
+                      <TableCell className="text-center">{rep.addressChecks}</TableCell>
+                      <TableCell className="text-center">{rep.creditChecks}</TableCell>
+                      <TableCell className="text-center font-semibold text-primary">{rep.sales}</TableCell>
+                      <TableCell className="text-center">{rep.products}</TableCell>
+                      <TableCell className="text-center">
+                        <Badge variant={parseFloat(rep.closeRate) >= 10 ? "default" : "secondary"} 
+                               className={parseFloat(rep.closeRate) >= 10 ? "bg-green-500/20 text-green-400 border-green-500/30" : ""}>
+                          {rep.closeRate}%
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-center font-medium text-green-400">
+                        ${rep.revenue.toFixed(2)}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </Card>
 
         {/* Current Performance vs Goals */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -127,7 +253,7 @@ export function LOAAnalyzerView({ user }: LOAAnalyzerViewProps) {
           <Card className="p-6 bg-card border-border">
             <div className="flex items-center gap-2 mb-6">
               <Target className="size-5 text-primary" />
-              <h3 className="text-lg font-semibold text-foreground">LOA Performance (Last 30 Days)</h3>
+              <h3 className="text-lg font-semibold text-foreground">Office LOA Performance (Last 30 Days)</h3>
             </div>
             
             <div className="space-y-6">

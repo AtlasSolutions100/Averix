@@ -274,7 +274,7 @@ app.get("/make-server-45dc47a9/auth/me", async (c) => {
 // DAILY ENTRIES ENDPOINTS
 // ============================================================================
 
-// Submit daily entry
+// Submit daily entry (OFFICIAL SUBMISSION - one per day per user)
 app.post("/make-server-45dc47a9/entries", requireAuth, async (c) => {
   try {
     const user = c.get('user');
@@ -288,6 +288,21 @@ app.post("/make-server-45dc47a9/entries", requireAuth, async (c) => {
       .select('office_id')
       .eq('id', user.id)
       .single();
+    
+    // Check if user already has an entry for this date
+    const { data: existingEntry } = await supabase
+      .from('daily_entries')
+      .select('id, store_id')
+      .eq('user_id', user.id)
+      .eq('entry_date', entry.date)
+      .maybeSingle();
+    
+    // If entry exists for a DIFFERENT store, prevent submission
+    if (existingEntry && existingEntry.store_id !== entry.storeId) {
+      return c.json({ 
+        error: 'You have already submitted a daily entry for today. Only one entry per day is allowed.' 
+      }, 400);
+    }
     
     const { data, error } = await supabase
       .from('daily_entries')
@@ -413,6 +428,84 @@ app.get("/make-server-45dc47a9/entries/office/:officeId", requireAuth, async (c)
 });
 
 // ============================================================================
+// LIVE TRACKER PROGRESS ENDPOINTS (DRAFTS - NOT OFFICIAL SUBMISSIONS)
+// ============================================================================
+
+// Save/update live tracker progress (auto-save)
+app.post("/make-server-45dc47a9/tracker/progress", requireAuth, async (c) => {
+  try {
+    const user = c.get('user');
+    const progress = await c.req.json();
+    const supabase = getSupabaseClient();
+    
+    // Get user's office_id
+    const { data: profile } = await supabase
+      .from('user_profiles')
+      .select('office_id')
+      .eq('id', user.id)
+      .single();
+    
+    // Upsert tracker progress (one per user per day)
+    const { data, error } = await supabase
+      .from('live_tracker_progress')
+      .upsert({
+        user_id: user.id,
+        office_id: profile.office_id,
+        tracker_date: progress.date,
+        store_id: progress.storeId || null,
+        contacts: progress.contacts || 0,
+        stops: progress.stops || 0,
+        presentations: progress.presentations || 0,
+        address_checks: progress.addressChecks || 0,
+        credit_checks: progress.creditChecks || 0,
+        sales: progress.sales || 0,
+        products: progress.products || 0,
+        last_saved: new Date().toISOString(),
+      }, {
+        onConflict: 'user_id,tracker_date'
+      })
+      .select()
+      .single();
+    
+    if (error) {
+      console.error('Tracker progress save error:', error);
+      return c.json({ error: error.message }, 400);
+    }
+    
+    return c.json({ progress: data });
+  } catch (error) {
+    console.error('Save tracker progress error:', error);
+    return c.json({ error: 'Internal server error saving tracker progress' }, 500);
+  }
+});
+
+// Get live tracker progress for today
+app.get("/make-server-45dc47a9/tracker/progress/:date", requireAuth, async (c) => {
+  try {
+    const user = c.get('user');
+    const date = c.req.param('date');
+    const supabase = getSupabaseClient();
+    
+    const { data, error } = await supabase
+      .from('live_tracker_progress')
+      .select('*')
+      .eq('user_id', user.id)
+      .eq('tracker_date', date)
+      .maybeSingle();
+    
+    if (error) {
+      console.error('Fetch tracker progress error:', error);
+      return c.json({ error: error.message }, 400);
+    }
+    
+    return c.json({ progress: data });
+  } catch (error) {
+    console.error('Get tracker progress error:', error);
+    return c.json({ error: 'Internal server error fetching tracker progress' }, 500);
+  }
+});
+
+// ============================================================================
 // ANALYTICS ENDPOINTS
 // ============================================================================
 
@@ -516,15 +609,25 @@ app.get("/make-server-45dc47a9/analytics/leaderboard/:officeId", requireAuth, as
           userId,
           name: entry.user_profiles?.name || 'Unknown',
           contacts: 0,
+          stops: 0,
           presentations: 0,
+          addressChecks: 0,
+          creditChecks: 0,
           sales: 0,
+          products: 0,
+          applications: 0,
           revenue: 0,
         };
       }
       
       acc[userId].contacts += entry.contacts || 0;
+      acc[userId].stops += entry.stops || 0;
       acc[userId].presentations += entry.presentations || 0;
+      acc[userId].addressChecks += entry.address_checks || 0;
+      acc[userId].creditChecks += entry.credit_checks || 0;
       acc[userId].sales += entry.sales || 0;
+      acc[userId].products += entry.products || 0;
+      acc[userId].applications += entry.applications || 0;
       acc[userId].revenue += parseFloat(entry.revenue || 0);
       
       return acc;
@@ -535,6 +638,11 @@ app.get("/make-server-45dc47a9/analytics/leaderboard/:officeId", requireAuth, as
       ...rep,
       closeRate: rep.contacts > 0 ? ((rep.sales / rep.contacts) * 100).toFixed(1) : '0.0',
       revenuePerContact: rep.contacts > 0 ? (rep.revenue / rep.contacts).toFixed(2) : '0.00',
+      // LOA ratios
+      stopsPerContact: rep.contacts > 0 ? (rep.stops / rep.contacts).toFixed(2) : '0.00',
+      presentationsPerContact: rep.contacts > 0 ? (rep.presentations / rep.contacts).toFixed(2) : '0.00',
+      contactsPerSale: rep.sales > 0 ? (rep.contacts / rep.sales).toFixed(1) : '0.0',
+      presentationsPerSale: rep.sales > 0 ? (rep.presentations / rep.sales).toFixed(1) : '0.0',
     })).sort((a: any, b: any) => b.sales - a.sales);
     
     return c.json({ leaderboard });

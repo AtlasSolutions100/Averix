@@ -3,7 +3,7 @@ import { Card } from "@/app/components/ui/card";
 import { Button } from "@/app/components/ui/button";
 import { Plus, Minus, Save, RotateCcw, TrendingUp, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
-import { entriesAPI, storesAPI } from "@/services/api";
+import { trackerAPI, storesAPI } from "@/services/api";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/app/components/ui/select";
 import { useTracker, type TrackerState } from "@/contexts/TrackerContext";
 import type { User } from "@/app/App";
@@ -50,7 +50,7 @@ export function LiveTrackerView({ user }: LiveTrackerViewProps) {
     };
   }, [tracker]);
 
-  // Auto-save to database every 5 minutes if there's data
+  // Auto-save to database every 5 minutes if there's data (DRAFT - NOT OFFICIAL SUBMISSION)
   useEffect(() => {
     const hasData = Object.values(tracker).some(val => val > 0);
     if (!hasData || !selectedStore) return;
@@ -58,22 +58,20 @@ export function LiveTrackerView({ user }: LiveTrackerViewProps) {
     const autoSaveInterval = setInterval(async () => {
       try {
         const today = new Date().toISOString().split('T')[0];
-        await entriesAPI.submit({
-          storeId: selectedStore,
+        await trackerAPI.saveProgress({
           date: today,
-          stops: tracker.stops,
+          storeId: selectedStore,
           contacts: tracker.contacts,
+          stops: tracker.stops,
           presentations: tracker.presentations,
           addressChecks: tracker.addressChecks,
           creditChecks: tracker.creditChecks,
           sales: tracker.sales,
-          applications: tracker.products,
-          hoursWorked: 0,
-          revenue: 0,
+          products: tracker.products,
         });
         
         setLastAutoSave(new Date());
-        console.log('✅ Auto-saved progress to database');
+        console.log('✅ Auto-saved tracker progress (draft)');
       } catch (error) {
         console.error('Auto-save failed:', error);
       }
@@ -157,25 +155,23 @@ export function LiveTrackerView({ user }: LiveTrackerViewProps) {
 
     setSaving(true);
     try {
-      // Note: This saves as an official entry, not a draft
-      // Progress is automatically saved to localStorage on every change
+      // Manual save to tracker progress (draft)
       const today = new Date().toISOString().split('T')[0];
-      await entriesAPI.submit({
-        storeId: selectedStore,
+      await trackerAPI.saveProgress({
         date: today,
-        stops: tracker.stops,
+        storeId: selectedStore,
         contacts: tracker.contacts,
+        stops: tracker.stops,
         presentations: tracker.presentations,
         addressChecks: tracker.addressChecks,
         creditChecks: tracker.creditChecks,
         sales: tracker.sales,
-        applications: tracker.products, // Map products to applications in database
-        hoursWorked: 0,
-        revenue: 0,
+        products: tracker.products,
       });
 
-      toast.success("Progress saved to database!", {
-        description: `${tracker.sales} sales recorded`,
+      setLastAutoSave(new Date());
+      toast.success("Progress saved (draft)!", {
+        description: `${tracker.sales} sales tracked. Submit via Daily Entry to make it official.`,
         icon: <CheckCircle2 className="size-4" />,
       });
     } catch (error: any) {

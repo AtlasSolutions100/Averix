@@ -87,6 +87,39 @@ CREATE TABLE IF NOT EXISTS daily_entries (
 );
 
 -- ============================================================================
+-- TABLE: live_tracker_progress
+-- In-progress LOA tracking data (drafts) - NOT official submissions
+-- Auto-saves from Live Tracker, only becomes official via Daily Entry submission
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS live_tracker_progress (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID NOT NULL REFERENCES user_profiles(id) ON DELETE CASCADE,
+  office_id UUID NOT NULL REFERENCES offices(id) ON DELETE CASCADE,
+  
+  -- Date tracking
+  tracker_date DATE NOT NULL,
+  
+  -- Current store (can be null if not selected yet)
+  store_id UUID REFERENCES stores(id) ON DELETE SET NULL,
+  
+  -- LOA Funnel Metrics (in-progress counts)
+  contacts INTEGER DEFAULT 0,
+  stops INTEGER DEFAULT 0,
+  presentations INTEGER DEFAULT 0,
+  address_checks INTEGER DEFAULT 0,
+  credit_checks INTEGER DEFAULT 0,
+  sales INTEGER DEFAULT 0,
+  products INTEGER DEFAULT 0,
+  
+  -- Metadata
+  last_saved TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  
+  -- One tracker per user per day
+  UNIQUE(user_id, tracker_date)
+);
+
+-- ============================================================================
 -- TABLE: rep_store_assignments
 -- Track which reps are assigned to which stores
 -- ============================================================================
@@ -120,6 +153,7 @@ CREATE TABLE IF NOT EXISTS goals (
 CREATE INDEX IF NOT EXISTS idx_daily_entries_user_date ON daily_entries(user_id, entry_date DESC);
 CREATE INDEX IF NOT EXISTS idx_daily_entries_office_date ON daily_entries(office_id, entry_date DESC);
 CREATE INDEX IF NOT EXISTS idx_daily_entries_store_date ON daily_entries(store_id, entry_date DESC);
+CREATE INDEX IF NOT EXISTS idx_live_tracker_progress_user_date ON live_tracker_progress(user_id, tracker_date DESC);
 CREATE INDEX IF NOT EXISTS idx_stores_office ON stores(office_id);
 CREATE INDEX IF NOT EXISTS idx_user_profiles_office ON user_profiles(office_id);
 CREATE INDEX IF NOT EXISTS idx_rep_store_assignments_user ON rep_store_assignments(user_id);
@@ -133,6 +167,7 @@ ALTER TABLE offices ENABLE ROW LEVEL SECURITY;
 ALTER TABLE stores ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE daily_entries ENABLE ROW LEVEL SECURITY;
+ALTER TABLE live_tracker_progress ENABLE ROW LEVEL SECURITY;
 ALTER TABLE rep_store_assignments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE goals ENABLE ROW LEVEL SECURITY;
 
@@ -188,6 +223,11 @@ CREATE POLICY "Users can view daily entries"
 -- Daily Entries: Reps can update own entries
 CREATE POLICY "Reps can update own entries"
   ON daily_entries FOR UPDATE
+  USING (user_id = auth.uid());
+
+-- Live Tracker Progress: Users can manage their own progress
+CREATE POLICY "Users can manage own tracker progress"
+  ON live_tracker_progress FOR ALL
   USING (user_id = auth.uid());
 
 -- Goals: Users can manage their own goals
