@@ -151,6 +151,8 @@ export const authAPI = {
 
   // Sign up new user
   signUp: async (email: string, password: string, name: string, role: string, officeIdOrName: string) => {
+    loadConfig(); // Ensure config is loaded
+    
     const payload: any = { email, password, name, role };
     
     // If owner, pass officeName; if rep, pass officeId
@@ -160,18 +162,37 @@ export const authAPI = {
       payload.officeId = officeIdOrName;
     }
     
+    console.log('🚀 Signup request payload:', { ...payload, password: '***' });
+    
     const response = await fetch(`${getAPIBase()}/auth/signup`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${publicAnonKey}`, // Required for Supabase gateway
+      },
       body: JSON.stringify(payload),
     });
     
+    console.log('📡 Signup response status:', response.status);
+    
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Signup failed');
+      let errorMessage = 'Signup failed';
+      try {
+        const error = await response.json();
+        console.error('❌ Signup error from server:', error);
+        errorMessage = error.error || errorMessage;
+      } catch (e) {
+        console.error('❌ Failed to parse error response:', e);
+        const text = await response.text();
+        console.error('❌ Raw error response:', text);
+        errorMessage = text || errorMessage;
+      }
+      throw new Error(errorMessage);
     }
     
-    return response.json();
+    const result = await response.json();
+    console.log('✅ Signup successful:', result);
+    return result;
   },
 
   // Get current session
