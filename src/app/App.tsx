@@ -1,14 +1,12 @@
-import { useState, useEffect, Component, ErrorInfo, ReactNode, lazy, Suspense } from "react";
+import { useState, useEffect, Component, ErrorInfo, ReactNode } from "react";
 import { LoginPage } from "@/app/components/LoginPage";
 import { SignupPage } from "@/app/components/SignupPage";
+import { OwnerLayout } from "@/app/components/OwnerLayout";
+import { RepLayout } from "@/app/components/RepLayout";
 import { Toaster } from "@/app/components/ui/sonner";
 import { LoadingSpinner } from "@/app/components/LoadingSpinner";
 import { useSEO, SEO_CONFIGS } from "@/hooks/useSEO";
 import { useFavicon } from "@/hooks/useFavicon";
-
-// Lazy load layouts for better initial load time
-const OwnerLayout = lazy(() => import("@/app/components/OwnerLayout").then(m => ({ default: m.OwnerLayout })));
-const RepLayout = lazy(() => import("@/app/components/RepLayout").then(m => ({ default: m.RepLayout })));
 
 export type UserRole = "owner" | "rep" | "cydcor";
 
@@ -332,9 +330,7 @@ function AppContent() {
   if (user.role === "owner" || user.role === "cydcor") {
     return (
       <>
-        <Suspense fallback={<LoadingSpinner fullScreen message="Loading dashboard..." />}>
-          <OwnerLayout user={user} onLogout={handleLogout} />
-        </Suspense>
+        <OwnerLayout user={user} onLogout={handleLogout} />
         <Toaster />
       </>
     );
@@ -342,9 +338,7 @@ function AppContent() {
 
   return (
     <>
-      <Suspense fallback={<LoadingSpinner fullScreen message="Loading dashboard..." />}>
-        <RepLayout user={user} onLogout={handleLogout} />
-      </Suspense>
+      <RepLayout user={user} onLogout={handleLogout} />
       <Toaster />
     </>
   );

@@ -98,8 +98,16 @@ export function SignupPage({ onSignup, onBackToLogin }: SignupPageProps) {
     } catch (err: any) {
       console.error("Signup error:", err);
 
+      // Check for duplicate email error
+      if (err.message?.includes("already exists") || err.message?.includes("email_exists")) {
+        setError("This email is already registered. Please sign in instead.");
+        toast.error("Account already exists", {
+          description: "This email is already registered. Try signing in instead.",
+          duration: 5000,
+        });
+      }
       // Check if it's a server connectivity issue
-      if (err.message?.includes("Load failed") || err.message?.includes("fetch")) {
+      else if (err.message?.includes("Load failed") || err.message?.includes("fetch")) {
         setError(
           "⚠️ Cannot connect to server. The Supabase Edge Function needs to be deployed. See SERVER_DEPLOYMENT_GUIDE.md"
         );

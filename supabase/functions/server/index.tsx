@@ -163,6 +163,14 @@ app.post("/make-server-45dc47a9/auth/signup", async (c) => {
     
     if (authError) {
       console.error('Auth error:', authError);
+      
+      // Handle specific error cases with user-friendly messages
+      if (authError.message?.includes('already been registered') || authError.code === 'email_exists') {
+        return c.json({ 
+          error: 'An account with this email already exists. Please sign in instead or use a different email.' 
+        }, 409); // 409 Conflict status code
+      }
+      
       return c.json({ error: authError.message }, 400);
     }
     
