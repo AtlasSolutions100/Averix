@@ -150,8 +150,8 @@ export function RepHistoryView({ user }: RepHistoryViewProps) {
               <TableRow>
                 <TableHead>Date</TableHead>
                 <TableHead>Store</TableHead>
-                <TableHead className="text-right">Stops</TableHead>
                 <TableHead className="text-right">Contacts</TableHead>
+                <TableHead className="text-right">Stops</TableHead>
                 <TableHead className="text-right">Pres</TableHead>
                 <TableHead className="text-right">Sales</TableHead>
                 <TableHead className="text-right">Revenue</TableHead>
@@ -173,8 +173,8 @@ export function RepHistoryView({ user }: RepHistoryViewProps) {
                       </div>
                     </TableCell>
                     <TableCell className="text-sm text-foreground">{day.store}</TableCell>
-                    <TableCell className="text-right text-foreground">{day.stops}</TableCell>
                     <TableCell className="text-right text-foreground">{day.contacts}</TableCell>
+                    <TableCell className="text-right text-foreground">{day.stops}</TableCell>
                     <TableCell className="text-right text-foreground">{day.pres}</TableCell>
                     <TableCell className="text-right">
                       <span className="font-semibold text-primary">{day.sales}</span>
