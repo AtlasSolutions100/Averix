@@ -171,7 +171,7 @@ export function LoginPage({ onLogin, onSwitchToSignup }: LoginPageProps) {
           </form>
 
           {/* Demo Accounts */}
-          <div className="mt-6 pt-6 border-t border-border">
+          {/*  <div className="mt-6 pt-6 border-t border-border">
             <p className="text-xs text-muted-foreground mb-3 text-center">Demo Accounts:</p>
             <div className="space-y-2">
               <Button
@@ -193,7 +193,7 @@ export function LoginPage({ onLogin, onSwitchToSignup }: LoginPageProps) {
                 jake@olympus.com / demo
               </Button>
             </div>
-          </div>
+           </div> */}
 
           {/* Signup Link */}
           <div className="mt-6 text-center">
