@@ -1,11 +1,14 @@
-import { useState, useEffect, Component, ErrorInfo, ReactNode } from "react";
+import { useState, useEffect, Component, ErrorInfo, ReactNode, lazy, Suspense } from "react";
 import { LoginPage } from "@/app/components/LoginPage";
 import { SignupPage } from "@/app/components/SignupPage";
-import { OwnerLayout } from "@/app/components/OwnerLayout";
-import { RepLayout } from "@/app/components/RepLayout";
 import { Toaster } from "@/app/components/ui/sonner";
+import { LoadingSpinner } from "@/app/components/LoadingSpinner";
 import { useSEO, SEO_CONFIGS } from "@/hooks/useSEO";
 import { useFavicon } from "@/hooks/useFavicon";
+
+// Lazy load layouts for better initial load time
+const OwnerLayout = lazy(() => import("@/app/components/OwnerLayout").then(m => ({ default: m.OwnerLayout })));
+const RepLayout = lazy(() => import("@/app/components/RepLayout").then(m => ({ default: m.RepLayout })));
 
 export type UserRole = "owner" | "rep" | "cydcor";
 
@@ -303,19 +306,7 @@ function AppContent() {
   };
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-screen bg-background">
-        <div className="text-center">
-          <div className="relative w-16 h-16 mx-auto mb-4">
-            {/* Neon RGB animated spinner */}
-            <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-[#00D9FF] animate-spin"></div>
-            <div className="absolute inset-0 rounded-full border-4 border-transparent border-r-[#7C5CFA] animate-spin" style={{ animationDelay: '0.15s', animationDuration: '1.5s' }}></div>
-            <div className="absolute inset-0 rounded-full border-4 border-transparent border-b-[#FF006E] animate-spin" style={{ animationDelay: '0.3s', animationDuration: '2s' }}></div>
-          </div>
-          <p className="text-muted-foreground">Loading...</p>
-        </div>
-      </div>
-    );
+    return <LoadingSpinner fullScreen />;
   }
 
   if (!user) {
@@ -341,7 +332,9 @@ function AppContent() {
   if (user.role === "owner" || user.role === "cydcor") {
     return (
       <>
-        <OwnerLayout user={user} onLogout={handleLogout} />
+        <Suspense fallback={<LoadingSpinner fullScreen message="Loading dashboard..." />}>
+          <OwnerLayout user={user} onLogout={handleLogout} />
+        </Suspense>
         <Toaster />
       </>
     );
@@ -349,7 +342,9 @@ function AppContent() {
 
   return (
     <>
-      <RepLayout user={user} onLogout={handleLogout} />
+      <Suspense fallback={<LoadingSpinner fullScreen message="Loading dashboard..." />}>
+        <RepLayout user={user} onLogout={handleLogout} />
+      </Suspense>
       <Toaster />
     </>
   );

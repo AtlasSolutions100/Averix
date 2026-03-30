@@ -21,7 +21,7 @@ export function OwnerPasscodeModal({ isOpen, onSuccess, onCancel }: OwnerPasscod
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (passcode === "8170") {
+    if (passcode === "9900") {
       setError("");
       onSuccess();
     } else {
